@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "xhash": "cpp",
+        "xtree": "cpp",
+        "xutility": "cpp",
+        "algorithm": "cpp",
+        "ios": "cpp",
+        "*.tcc": "cpp",
+        "functional": "cpp"
+    }
+}
