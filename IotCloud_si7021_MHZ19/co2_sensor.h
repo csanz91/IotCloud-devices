@@ -1,19 +1,22 @@
 #pragma once
 
 #include <sensors/analog.h>
-#include "co2_sensor.h"
+#include <MHZ19.h>
+#include <SoftwareSerial.h>
 
-class IotCloud_CO2_T : public AnalogSensor
+class IotCloud_CO2 : public AnalogSensor
 {
 
 private:
-    const float *_value;
+    SoftwareSerial * _serial;
+    MHZ19 *_co2_sensor;
     void get_value();
+    void init(char *mqtt_header, EspMQTTClient *mqtt_client);
 
 public:
-    IotCloud_CO2_T(
+    IotCloud_CO2(
         const char *sensor_id,
         const char *sensor_name,
         const char *metadata,
-        const float *value);
+        const int rx, const int tx);
 };

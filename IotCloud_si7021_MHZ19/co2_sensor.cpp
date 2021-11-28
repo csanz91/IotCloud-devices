@@ -1,26 +1,45 @@
-#include "co2_sensor.h"
+#include "co2_sensor.h" x
 
-IotCloud_CO2_T::IotCloud_CO2_T(
+IotCloud_CO2::IotCloud_CO2(
     const char *sensor_id,
     const char *sensor_name,
     const char *metadata,
-    const float *value) : AnalogSensor(sensor_id,
-                                       sensor_name,
-                                       120000,
-                                       1,
-                                       true,
-                                       "analog",
-                                       metadata,
-                                       0.0),
-                          _value(value)
+    const int rx, const int tx) : AnalogSensor(sensor_id,
+                                               sensor_name,
+                                               30000,
+                                               1,
+                                               false,
+                                               "analog",
+                                               metadata,
+                                               0.0)
 {
+    _serial = new SoftwareSerial(rx, tx);
+    _serial->begin(9600);
+    _co2_sensor = new MHZ19();
+    _co2_sensor->begin(*_serial);
+    _co2_sensor->autoCalibration(false);
+    _co2_sensor->setFilter(true, true);
 }
 
-void IotCloud_CO2_T::get_value()
+void IotCloud_CO2::init(char *mqtt_header, EspMQTTClient *mqtt_client)
 {
-    float read_value = *_value;
-    if (!isnan(read_value))
+    AnalogSensor::init(mqtt_header, mqtt_client);
+
+    char constructedTopic[94] = "";
+    construct_topic(constructedTopic, "aux/calibrate");
+    mqtt_client->subscribe(constructedTopic, [&](const String &payload)
+                           {
+                               Serial.println("Calibration requested...");
+                               _co2_sensor->calibrate();
+                           });
+}
+
+void IotCloud_CO2::get_value()
+{
+    int ppm_uart = _co2_sensor->getCO2(true);
+    if (ppm_uart != 0)
     {
-        set_value(read_value);
+        float ppm = (float)ppm_uart;
+        set_value(ppm);
     }
 }
