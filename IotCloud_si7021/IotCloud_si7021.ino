@@ -6,7 +6,7 @@
 
 #define PIN D1
 
-Device my_device = Device("v1.0", "SI7021");
+Device my_device = Device("v1.1", "SI7021");
 
 SI7021_AM2301 sensor = SI7021_AM2301(PIN, SI7021_AM2301::SensorModel::SI7021);
 

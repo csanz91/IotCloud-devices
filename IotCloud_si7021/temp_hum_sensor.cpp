@@ -11,7 +11,7 @@ IotCloud_T_H::IotCloud_T_H(
                                        true,
                                        "analog",
                                        metadata,
-                                       0.05),
+                                       0.01),  // 1% filtering
                           _value(value)
 {
 }
