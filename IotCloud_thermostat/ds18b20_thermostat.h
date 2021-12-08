@@ -15,6 +15,7 @@ class IOTCLOUD_THERMOSTAT_DS18B20 : public Thermostat
     };
 
 private:
+    const int _relay_pin;
     DallasTemperature *_sensors;
     DeviceAddress _sensor_addr;
     OneWire *_oneWire;
@@ -26,5 +27,6 @@ public:
     IOTCLOUD_THERMOSTAT_DS18B20(
         const char *sensor_id,
         const char *sensor_name,
-        const int one_wire_bus);
+        const int one_wire_bus,
+        const int relay_pin);
 };

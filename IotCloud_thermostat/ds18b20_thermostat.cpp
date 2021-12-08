@@ -3,15 +3,21 @@
 IOTCLOUD_THERMOSTAT_DS18B20::IOTCLOUD_THERMOSTAT_DS18B20(
     const char *sensor_id,
     const char *sensor_name,
-    const int one_wire_bus) : Thermostat(sensor_id,
-                                         sensor_name,
-                                         15000,
-                                         1,
-                                         true,
-                                         "thermostat",
-                                         "{\"engUnits\": \"\xB0"
-                                         "C\", \"stringFormat\": \"#.0\"}")
+    const int one_wire_bus,
+    const int relay_pin) : Thermostat(sensor_id,
+                                      sensor_name,
+                                      15000,
+                                      1,
+                                      true,
+                                      "thermostat",
+                                      "{\"engUnits\": \"\xB0"
+                                      "C\", \"stringFormat\": \"#.0\"}",
+                                      0.01), // 1% filtering
+                           _relay_pin(relay_pin)
 {
+
+    pinMode(_relay_pin, OUTPUT);
+    digitalWrite(_relay_pin, HIGH);
 
     _oneWire = new OneWire(one_wire_bus);
 
@@ -24,9 +30,7 @@ IOTCLOUD_THERMOSTAT_DS18B20::IOTCLOUD_THERMOSTAT_DS18B20(
 void IOTCLOUD_THERMOSTAT_DS18B20::set_heating(bool new_heating_state)
 {
     Thermostat::set_heating(new_heating_state);
-
-    Serial.print("Heating: ");
-    Serial.println(new_heating_state);
+    digitalWrite(_relay_pin, !new_heating_state);
 }
 
 void IOTCLOUD_THERMOSTAT_DS18B20::get_value()
@@ -39,7 +43,7 @@ void IOTCLOUD_THERMOSTAT_DS18B20::get_value()
         bool found = _sensors->getAddress(_sensor_addr, 0);
         if (found)
         {
-            Serial.print(F("Device found"));
+            Serial.println(F("Device found"));
             _sensors->setResolution(_sensor_addr, 12);
             _current_step = Steps::REQ_TEMP;
         }
@@ -62,7 +66,6 @@ void IOTCLOUD_THERMOSTAT_DS18B20::get_value()
             Serial.println(F("Error: Could not read temperature data"));
             return;
         }
-        Serial.println(temperature);
         set_value(temperature);
         _current_step = Steps::REQ_TEMP;
     }
