@@ -11,7 +11,7 @@
 #define MH_Z19_RX D7 // D7
 #define MH_Z19_TX D6 // D6
 
-Device my_device = Device("v1.0", "SI7021_CO2");
+Device my_device = Device("v1.3.6", "SI7021_CO2");
 
 SI7021_AM2301 t_h_sensor = SI7021_AM2301(SI7021_PIN, SI7021_AM2301::SensorModel::SI7021);
 

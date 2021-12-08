@@ -8,10 +8,10 @@ IotCloud_CO2::IotCloud_CO2(
                                                sensor_name,
                                                30000,
                                                1,
-                                               false,
+                                               true,
                                                "analog",
                                                metadata,
-                                               0.0)
+                                               0.03) // 3% filtering
 {
     _serial = new SoftwareSerial(rx, tx);
     _serial->begin(9600);
