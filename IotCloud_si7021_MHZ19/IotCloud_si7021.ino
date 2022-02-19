@@ -2,8 +2,8 @@
 #include <iotcloud.h>
 
 #include "temp_hum_sensor.h"
-#include "si7021_am2301.h"
-#include "co2_sensor.h"
+#include <si7021_am2301.h>
+#include <co2_sensor.h>
 
 // pin for Temp/hum reading
 #define SI7021_PIN D1
