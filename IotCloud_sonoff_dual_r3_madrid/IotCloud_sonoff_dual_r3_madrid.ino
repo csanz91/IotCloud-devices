@@ -16,12 +16,10 @@ void setup(void)
 {
     Serial.begin(115200);
 
-    my_device.add_sensor(new GENERIC_TOOGLE("SonoffDualR3_Switch1", "Switch1", RELAY_1, SWITCH_1));
-    my_device.add_sensor(new GENERIC_TOOGLE("SonoffDualR3_Switch2", "Switch2", RELAY_2, SWITCH_2));
+    my_device.add_sensor(new GENERIC_TOOGLE("Switch1", "Switch1", RELAY_1, SWITCH_1));
+    my_device.add_sensor(new GENERIC_TOOGLE("Switch2", "Switch2", RELAY_2, SWITCH_2));
     my_device.add_sensor(new PRESENCE_SENSOR("Presence", "Presence", TX2));
     iotcloud_setup(&my_device);
-
-    pinMode(TX2, INPUT);
 }
 
 void loop(void)
