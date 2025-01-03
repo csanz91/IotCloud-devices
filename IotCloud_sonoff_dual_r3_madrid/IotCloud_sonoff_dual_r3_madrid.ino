@@ -4,18 +4,11 @@
 
 Device my_device = Device("v1.0.0", "SONOFF_DUAL_R3_MADRID");
 
-// static const uint8_t TX = 1;
-// static const uint8_t RX = 3;
+// boards.txt -> sonoff_dualr3.build.variant=sonoff_dualr3
+// de lo contrario no se cargan las definiciones de los pines
 
-// static const uint8_t BUTTON = 0;
-// static const uint8_t LED_LINK = 13;
-// static const uint8_t RELAY_2 = 14;
-// static const uint8_t RELAY_1 = 27;
-// static const uint8_t SWITCH_2 = 33;
-// static const uint8_t SWITCH_1 = 32;
-
-// static const uint8_t CSE7761_TX = 25;
-// static const uint8_t CSE7761_RX = 26;
+#define TX2 17
+#define RX2 16
 
 void setup(void)
 {
