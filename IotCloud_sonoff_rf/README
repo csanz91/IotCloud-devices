@@ -1,0 +1,4 @@
+BUILTIN LED 13
+0Kb Flash 512Kb OTA
+Generif esp8285
+Pin tx esta tocado, hay que soldar directamente al esp. Pin de la derecha del todo de la fila de arriba

@@ -1,6 +1,6 @@
 #include "generic_switch.h"
 
-GENERIC_SWITCH::GENERIC_SWITCH(
+GENERIC_TOOGLE::GENERIC_TOOGLE(
     const char *sensor_id,
     const char *sensor_name,
     const int relay_pin,
@@ -20,28 +20,28 @@ GENERIC_SWITCH::GENERIC_SWITCH(
     _last_state = digitalRead(_switch_pin);
 }
 
-void GENERIC_SWITCH::set_state(const bool state)
+void GENERIC_TOOGLE::set_state(const bool state)
 {
     SwitchSensor::set_state(state);
     digitalWrite(_relay_pin, state);
 }
 
-void GENERIC_SWITCH::loop()
+void GENERIC_TOOGLE::loop()
 {
     // Debounce the switch
     bool switch_state = digitalRead(_switch_pin);
     if (switch_state != _last_state)
     {
-        _mem_switch_state = true;
-        _last_debounce_time = millis();
+        _mem_switch_state_1 = true;
+        _last_debounce_time_1 = millis();
     }
 
-    if ((millis() - _last_debounce_time) > 50)
+    if ((millis() - _last_debounce_time_1) > 50)
     {
-        if (_mem_switch_state)
+        if (_mem_switch_state_1)
         {
-            _mem_switch_state = false;
-            GENERIC_SWITCH::set_state(!state);
+            _mem_switch_state_1 = false;
+            GENERIC_TOOGLE::set_state(!state);
         }
     }
 

@@ -13,7 +13,7 @@ const uint8_t Seven_Seg_Clock::char9[] = {4, 9, 10, 12, 13, 255};
 
 const uint8_t *Seven_Seg_Clock::_chars[10] = {char0, char1, char2, char3, char4, char5, char6, char7, char8, char9};
 
-const CHSV Seven_Seg_Clock::_segBlack(0, 0, 0); //black
+const CHSV Seven_Seg_Clock::_segBlack(0, 0, 0); // black
 
 const TBlendType Seven_Seg_Clock::_current_blending = LINEARBLEND;
 const CRGBPalette16 Seven_Seg_Clock::_current_palette = RainbowColors_p;
@@ -21,7 +21,9 @@ const CRGBPalette16 Seven_Seg_Clock::_current_palette = RainbowColors_p;
 Seven_Seg_Clock::Seven_Seg_Clock(
     const char *sensor_id,
     const char *sensor_name) : LedSensor(sensor_id,
-                                         sensor_name)
+                                         sensor_name,
+                                         "led",
+                                         "{\"settings\":[{\"name\":\"Initial Brightness\",\"description\":\"Brightness for the device with the ON state.\",\"endpoint\":\"initialBrightness\",\"actionType\":\"floatpar\",\"value\":0.5,\"limits\":{\"hi\":1.0,\"lo\":0.0}}]}")
 {
     FastLED.addLeds<WS2811, _data_pin, GRB>(_leds, _num_leds)
         .setCorrection(Typical8mmPixel);

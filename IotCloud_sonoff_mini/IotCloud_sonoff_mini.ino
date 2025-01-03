@@ -11,7 +11,7 @@ void setup(void)
 {
     Serial.begin(115200);
 
-    my_device.add_sensor(new GENERIC_SWITCH("SonoffMini", "Switch", RELAY_PIN, SWITCH_PIN));
+    my_device.add_sensor(new GENERIC_TOOGLE("SonoffMini", "Switch", RELAY_PIN, SWITCH_PIN));
     iotcloud_setup(&my_device);
 }
 

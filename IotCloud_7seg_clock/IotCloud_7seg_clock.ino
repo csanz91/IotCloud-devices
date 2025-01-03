@@ -2,7 +2,7 @@
 #include <iotcloud.h>
 #include "seven_seg_clock.h"
 
-Device my_device = Device("v1.2", "7SEG_CLOCK");
+Device my_device = Device("v1.4", "7SEG_CLOCK");
 
 void setup(void)
 {
