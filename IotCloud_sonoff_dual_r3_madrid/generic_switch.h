@@ -10,6 +10,7 @@ private:
     bool _last_state;
     bool _mem_switch_state_1 = false;
     unsigned long _last_debounce_time_1 = 0;
+    bool _initial_reading;
     void loop();
 
 public:

@@ -1,23 +1,22 @@
 #include "generic_switch.h"
 
 GENERIC_TOOGLE::GENERIC_TOOGLE(
-    const char *sensor_id,
-    const char *sensor_name,
-    const int relay_pin,
-    const int switch_pin) : SwitchSensor(sensor_id,
-                                         sensor_name,
-                                         "switch",
-                                         "{}"), // 1% filtering
-                            _relay_pin(relay_pin),
-                            _switch_pin(switch_pin)
-{
+  const char *sensor_id,
+  const char *sensor_name,
+  const int relay_pin,
+  const int switch_pin)
+  : SwitchSensor(sensor_id,
+                 sensor_name,
+                 "switch",
+                 "{}"),
+    _relay_pin(relay_pin),
+    _switch_pin(switch_pin) {
 
-    pinMode(_relay_pin, OUTPUT);
-    digitalWrite(_relay_pin, LOW);
+  pinMode(_relay_pin, OUTPUT);
+  digitalWrite(_relay_pin, LOW);
 
-    pinMode(_switch_pin, INPUT_PULLUP);
+  pinMode(_switch_pin, INPUT_PULLUP);
 
-    _last_state = digitalRead(_switch_pin);
 }
 
 void GENERIC_TOOGLE::set_state(const bool state)
@@ -28,22 +27,24 @@ void GENERIC_TOOGLE::set_state(const bool state)
 
 void GENERIC_TOOGLE::loop()
 {
-    // Debounce the switch
-    bool switch_state = digitalRead(_switch_pin);
-    if (switch_state != _last_state)
-    {
-        _mem_switch_state_1 = true;
-        _last_debounce_time_1 = millis();
-    }
+    const unsigned long DEBOUNCE_DELAY = 50;
+    
+    bool reading = digitalRead(_switch_pin);
 
-    if ((millis() - _last_debounce_time_1) > 50)
+    if (reading != _last_state && !_mem_switch_state_1)
     {
-        if (_mem_switch_state_1)
+        _initial_reading = reading;
+        _last_debounce_time_1 = millis();
+        _mem_switch_state_1 = true;
+    }
+    else if (_mem_switch_state_1 && (millis() - _last_debounce_time_1) > DEBOUNCE_DELAY)
+    {
+        if (reading == _initial_reading)
         {
-            _mem_switch_state_1 = false;
             GENERIC_TOOGLE::set_state(!state);
         }
+        _mem_switch_state_1 = false;
     }
 
-    _last_state = switch_state;
+    _last_state = reading;
 }

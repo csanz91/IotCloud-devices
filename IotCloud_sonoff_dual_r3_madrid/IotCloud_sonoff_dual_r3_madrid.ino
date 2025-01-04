@@ -3,7 +3,7 @@
 #include "generic_switch.h"
 #include "presence_sensor.h"
 
-Device my_device = Device("v1.0.5", "SONOFF_DUAL_R3_MADRID");
+Device my_device = Device("v1.0.3", "SONOFF_DUAL_R3_MADRID");
 
 // boards.txt -> sonoff_dualr3.build.variant=sonoff_dualr3
 // static const uint8_t LED_BUILTIN = 13; -> esp32/3.0.7/variants/sonoff_dualr3/pins_arduino.h
