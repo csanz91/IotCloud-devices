@@ -84,8 +84,8 @@ void GENERIC_TOOGLE::report_presence(bool presence)
     {
         return;
     }
-    char constructedTopic[110] = "";
-    construct_topic(constructedTopic, "aux/presence");
+    char constructedTopic[128] = "";
+    construct_topic(constructedTopic, sizeof(constructedTopic), "aux/presence");
     _mqtt_client->publish(constructedTopic, presence ? "true" : "false", true);
     Serial.print("Reported presence: ");
     Serial.println(presence ? "true" : "false");
@@ -95,8 +95,8 @@ void GENERIC_TOOGLE::init(char *mqtt_header, EspMQTTClient *mqtt_client)
 {
     SwitchSensor::init(mqtt_header, mqtt_client);
 
-    char constructedTopic[110] = "";
-    construct_topic(constructedTopic, "aux/luminosityThreshold");
+    char constructedTopic[128] = "";
+    construct_topic(constructedTopic, sizeof(constructedTopic), "aux/luminosityThreshold");
     mqtt_client->subscribe(constructedTopic, [&](const String &payload)
                            { 
                                _luminosity_threshold = atof(payload.c_str()); 
@@ -105,11 +105,11 @@ void GENERIC_TOOGLE::init(char *mqtt_header, EspMQTTClient *mqtt_client)
                            });
 
     constructedTopic[0] = '\0';
-    construct_topic(constructedTopic, "aux/luminosityHysteresis");
+    construct_topic(constructedTopic, sizeof(constructedTopic), "aux/luminosityHysteresis");
     mqtt_client->unsubscribe(constructedTopic); // Unsubscribe from hysteresis topic
 
     constructedTopic[0] = '\0';
-    construct_topic(constructedTopic, "aux/disableNotifications");
+    construct_topic(constructedTopic, sizeof(constructedTopic), "aux/disableNotifications");
     mqtt_client->subscribe(constructedTopic, [&](const String &payload)
                            { 
                                disable_notifications = (payload == "true"); 
@@ -118,7 +118,7 @@ void GENERIC_TOOGLE::init(char *mqtt_header, EspMQTTClient *mqtt_client)
                            });
 
     constructedTopic[0] = '\0';
-    construct_topic(constructedTopic, "aux/notificationsCooldown");
+    construct_topic(constructedTopic, sizeof(constructedTopic), "aux/notificationsCooldown");
     mqtt_client->subscribe(constructedTopic, [&](const String &payload)
                            { 
                                _notifications_cooldown = atol(payload.c_str()); 

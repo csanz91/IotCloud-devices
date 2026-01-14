@@ -49,7 +49,7 @@ void GENERIC_TOOGLE::report_presence(bool presence) {
   if (!_mqtt_client->isConnected()) {
     return;
   }
-  char constructedTopic[110] = "";
-  construct_topic(constructedTopic, "aux/presence");
+  char constructedTopic[128] = "";
+  construct_topic(constructedTopic, sizeof(constructedTopic), "aux/presence");
   _mqtt_client->publish(constructedTopic, presence ? "true" : "false", true);
 }
