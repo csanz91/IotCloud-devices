@@ -10,7 +10,7 @@
 
 // Servo configuration
 const long unsigned int ACTIVATION_TIME = 1000;
-const long unsigned int ACTIVATION_ANGLE = 90;
+const long unsigned int ACTIVATION_ANGLE = 85;
 const long unsigned int RESTING_ANGLE = 0;
 
 // LED states detection configuration
@@ -22,15 +22,15 @@ const int led_on_threshold = 20000;           // Milliseconds with the LED light
 const int led_on_measurement_threshold = 250; // Analog points (0-1023) from the darkest measurement to consider the LED ON
 const int num_blink_cycles_threshold = 10;    // Number of blinks to detect a done state
 
-Device my_device = Device("v1.0", "WASHING_MACHINE");
+Device my_device = Device("v1.1.0", "WASHING_MACHINE");
 
-NOTIFIER *notifier = new NOTIFIER("002_N", "Wachine Machine", "{}");
+NOTIFIER *notifier = new NOTIFIER("002_N", "Washing Machine", "{}");
 
 void setup(void)
 {
     Serial.begin(115200);
 
-    my_device.add_sensor(new SERVO_BUTTON("001_W", "Wachine Machine", "{}", ACTIVATION_TIME, ACTIVATION_ANGLE, RESTING_ANGLE, PIN));
+    my_device.add_sensor(new SERVO_BUTTON("001_W", "Washing Machine", "{}", ACTIVATION_TIME, ACTIVATION_ANGLE, RESTING_ANGLE, PIN));
     my_device.add_sensor(notifier);
     iotcloud_setup(&my_device);
 
@@ -118,9 +118,9 @@ void loop(void)
             on_notification_sent = true;
         }
 
-        Serial.println("LDR: " + String(ldr_value));
-        Serial.println("Num stable measurements: " + String(num_stable_measurements));
-        Serial.println("Num blink cycles: " + String(num_blink_cycles));
+        // Serial.println("LDR: " + String(ldr_value));
+        // Serial.println("Num stable measurements: " + String(num_stable_measurements));
+        // Serial.println("Num blink cycles: " + String(num_blink_cycles));
     }
     iotcloud_loop();
 }

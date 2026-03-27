@@ -1,0 +1,43 @@
+# Root-level gitignore for IotCloud-devices monorepo
+
+# PlatformIO build artifacts
+.pio/
+.pioenvs/
+.pio/build/
+
+# Environment settings
+.env
+common_env.ini
+
+# IDE/editor
+.vscode/
+.idea/
+*.code-workspace
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Build outputs
+build/
+*.bin
+*.elf
+
+# log/temp
+*.log
+*.tmp
+*.swp
+
+# User local config
+*.local
+
+# Avoid tracking nested library vendored .gitignore clutter
+**/.pio/libdeps/**/.gitignore
+
+# Keep README and source files tracked
+!README.md
