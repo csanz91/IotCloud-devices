@@ -1,0 +1,12 @@
+# Shelly 1
+
+Single-relay Shelly 1 firmware for the IotCloud platform.
+
+Pin mapping:
+
+- GPIO4: relay output
+- GPIO5: Shelly SW input, used as an external sticky switch
+- GPIO0: status LED and IotCloud setup/reset pin
+
+The Shelly SW terminal is a mains-capable input. Follow the Shelly wiring and
+electrical-safety requirements when connecting an external switch.
