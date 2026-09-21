@@ -1,5 +1,6 @@
 import os
 import re
+import gzip
 from glob import glob
 
 # --- FIX 1: Make VS Code Happy ---
@@ -62,6 +63,24 @@ def _get_first_project_option(*keys):
             if value:
                 return value
     return None
+
+
+def _ota_compression_enabled() -> bool:
+    value = _get_first_project_option("custom_ota_compress")
+    return value is not None and value.lower() in ("1", "true", "yes", "on")
+
+
+def _firmware_for_upload(firmware_path: str) -> str:
+    if not _ota_compression_enabled():
+        return firmware_path
+
+    compressed_path = firmware_path + ".gz"
+    with open(firmware_path, "rb") as source:
+        compressed = gzip.compress(source.read(), compresslevel=9, mtime=0)
+    with open(compressed_path, "wb") as target:
+        target.write(compressed)
+    print(f"Compressed OTA image: {len(compressed)} bytes ({compressed_path})")
+    return compressed_path
 
 
 def _slugify(value: str) -> str:
@@ -160,7 +179,7 @@ def run_remote_upload(*args, **kwargs):
 
     # ESP8266 builds reliably produce firmware.bin (PROGNAME can vary and cause
     # the pre-target dependency check to fail if we use ${PROGNAME}.bin).
-    firmware_path = str(env.subst("$BUILD_DIR/firmware.bin"))
+    firmware_path = _firmware_for_upload(str(env.subst("$BUILD_DIR/firmware.bin")))
     uploader_script = os.path.abspath(os.path.join(repo_dir, "tools", "upload_ota.sh"))
 
     model_num, version = _discover_model_and_version(project_dir, src_dir)
@@ -180,5 +199,5 @@ env.AddCustomTarget(
     "$BUILD_DIR/firmware.bin",
     run_remote_upload,
     title="Upload Remote",
-    description="Upload firmware via OTA Custom Protocol",
+    description="Upload firmware and deploy its model-wide OTA release",
 )
