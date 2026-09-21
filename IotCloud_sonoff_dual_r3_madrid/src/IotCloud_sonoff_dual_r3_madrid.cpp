@@ -3,14 +3,9 @@
 #include "generic_switch.h"
 #include "presence_sensor.h"
 
-Device my_device = Device("v1.0.3", "SONOFF_DUAL_R3_MADRID");
+Device my_device = Device(IOTCLOUD_FW_VERSION, IOTCLOUD_MODEL_NUM);
 
-// boards.txt -> sonoff_dualr3.build.variant=sonoff_dualr3
-// static const uint8_t LED_BUILTIN = 13; -> esp32/3.0.7/variants/sonoff_dualr3/pins_arduino.h
-// de lo contrario no se cargan las definiciones de los pines
-
-#define TX2 17
-#define RX2 16
+static constexpr int PRESENCE_PIN = 17;
 
 void setup(void)
 {
@@ -18,7 +13,7 @@ void setup(void)
 
     my_device.add_sensor(new GENERIC_TOOGLE("Switch1", "Switch1", RELAY_1, SWITCH_1));
     my_device.add_sensor(new GENERIC_TOOGLE("Switch2", "Switch2", RELAY_2, SWITCH_2));
-    my_device.add_sensor(new PRESENCE_SENSOR("Presence", "Presence", TX2));
+    my_device.add_sensor(new PRESENCE_SENSOR("Presence", "Presence", PRESENCE_PIN));
     iotcloud_setup(&my_device);
 }
 

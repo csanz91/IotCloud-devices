@@ -17,6 +17,10 @@ GENERIC_TOOGLE::GENERIC_TOOGLE(
 
   pinMode(_switch_pin, INPUT_PULLUP);
 
+  // Treat the switch level at boot as the baseline, not as a user action.
+  // Without this initialization, a cold boot can toggle the relay on after
+  // the debounce delay because _last_state contains an undefined value.
+  _last_state = digitalRead(_switch_pin);
 }
 
 void GENERIC_TOOGLE::set_state(const bool state)
