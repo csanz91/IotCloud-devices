@@ -1,4 +1,222 @@
-BUILTIN LED 13
-0Kb Flash 512Kb OTA
-Generif esp8285
-Pin tx esta tocado, hay que soldar directamente al esp. Pin de la derecha del todo de la fila de arriba
+SONOFF RF Bridge R2 — IoTCloud v2
+================================
+
+This project receives stock iTead RF UART messages and publishes events only for
+registered RF codes. It targets the ESP8285 with 1 MB flash, the stock RF MCU,
+UART0 RX/TX on GPIO3/GPIO1 at 19200 8N1, button GPIO0, and status LED GPIO13.
+It does not require replacing the RF MCU firmware or rewiring its receiver.
+Confirm the flash size/board revision before flashing. Standard stock-MCU RF
+transmission is supported; Portisch raw/bucket modes, rolling codes, and
+unsupported RF protocols remain outside this implementation.
+
+Build and install
+-----------------
+
+From the repository root:
+
+    pio run -d IotCloud_sonoff_rf
+    pio run -d IotCloud_sonoff_rf -t upload --upload-port <serial-port>
+
+If pio is not in PATH, use ~/.platformio/penv/bin/pio.
+The source now lives under src/, following the other PlatformIO projects.
+Dependencies and the ESP8285 baseline come from ../common_env.ini; model/version
+are defined in platformio.ini and injected by the shared OTA build helper.
+
+Use a serial flash for the initial migration. The image reserves 64 KB for
+LittleFS at 0xEB000..0xFB000, with the separate IoTCloud EEPROM sector at 0xFB000.
+A previous firmware with a different flash layout may require provisioning again.
+No filesystem image upload is required. Avoid uploadfs: it replaces the registry.
+
+The UART is exclusively for RF: application/library serial logging is disabled.
+A serial monitor will show binary RF frames, not a text console. Disconnect the
+USB UART transmitter from the shared RX line during normal operation.
+
+OTA
+---
+
+This project uses the same shared `upload_remote` target as the other devices.
+Its `custom_ota_compress = yes` setting makes that helper gzip the image before
+uploading it. Compression is needed because the roughly 550 KB firmware plus a
+second uncompressed copy does not fit below the 64 KB LittleFS partition on a
+1 MB chip. The other 1 MB builds are smaller and have no filesystem partition,
+so their uncompressed images fit.
+
+After installing and validating this version on hardware, future model-wide
+releases can use:
+
+    pio run -d IotCloud_sonoff_rf -t upload_remote
+
+That target publishes a release for ALL SONOFF_RF devices through the existing
+IoTCloud deployment helper; it is not a single-device serial upload. The OTA
+server must serve the actual gzip bytes, without HTTP content decompression.
+Compressed OTA needs the gzip-capable ESP8266 eboot included by the current core,
+installed with the initial serial flash. No upload or release deployment is
+performed by a normal build.
+
+MQTT topics
+-----------
+
+Use the existing device prefix:
+
+    BASE = v1/<locationId>/<deviceId>/
+    RF = BASE<deviceInternalId>_001_RF/aux/rf/
+
+Normal clients send commands through the IoTCloud REST API; the Rust gateway
+publishes the resulting MQTT messages. User MQTT tokens are read-only. For broker
+administration and firmware diagnostics, subscribe to `RF#` before sending raw
+commands. Commands are JSON and must be published with retain=false.
+
+Every command includes a unique `request_id` (1–64 characters). Results echo it.
+The `request_id` returned by a successful learn command is also its
+`learning_session_id`.
+
+Command          Additional payload
+initialize       "confirm":"ERASE_RF_REGISTRY"
+learn            starts a 60-second capture window
+register         "learning_session_id", "id", "code", optional "message", "repeats", "debounce_ms"
+cancel           "learning_session_id"
+delete           "id"
+send             "sync", "low", "high", "code"
+list             {}
+
+Output       Meaning
+status       Retained boot/protocol/registry identity, storage state, learning flag, counters; published on state change
+result       Non-retained command result
+candidate    Non-retained code/timings, readings, ready
+devices      Non-retained records with index/total, then complete:true
+event        Non-retained registered event: boot ID, sequence, id/message/code/timings/uptime/occurred_at
+
+All output contains `protocol_version:1` and a per-boot `boot_id`. Registry
+fragments contain a common `snapshot_id` and `registry_revision`; consumers must
+replace their cache only after receiving all indexed fragments and the matching
+`complete:true` marker.
+
+`send` transmits a standard stock-MCU A5 code. A successful result reports
+`"result":"sent"`, `"delivery":"rf_mcu_uart"`, and
+`"receiver_confirmed":false`: all bytes were written and flushed to the RF MCU,
+but the firmware cannot confirm that another device received or acted on the RF
+signal. Sending is rejected while learning is active. A matching A4 frame
+received within one second after a
+send is treated as the bridge's own echo, counted as `suppressed`, and is not
+eligible for learning or event publication. This can also suppress a genuine
+matching remote pressed during that one-second interval.
+
+Example command:
+
+    Topic: RFsend
+    Payload: {"request_id":"example-send-1","sync":8192,"low":300,"high":900,"code":1906529}
+
+Initialize storage once
+-----------------------
+
+Mounting never automatically formats flash. If `RFstatus` reports "unmounted",
+initialize the reserved filesystem explicitly:
+
+Topic: RFinitialize
+Payload: {"request_id":"example-initialize-1","confirm":"ERASE_RF_REGISTRY"}
+
+This erases ALL RF registrations in the LittleFS partition. It does not erase
+IoTCloud's separate EEPROM configuration. Do not initialize a working registry.
+If an existing registry is corrupt, status reports "invalid_registry", events
+are disabled, and writes are refused. Initialization is also an explicit recovery
+option, after saving/recovering any registrations you need.
+
+Register the door
+-----------------
+
+1. Start capture:
+
+   Topic: RFlearn
+   Payload: {"request_id":"learn-front-door-1"}
+
+2. Trigger the intended door sensor several times. Observe `RFcandidate`.
+   A candidate becomes ready after at least three readings with the same code
+   and pulse timings within 25% of the first reading. Up to eight distinct codes
+   are collected per window. Each candidate is published for its first three
+   matching readings, limiting traffic from chatty transmitters. If the window
+   fills with other devices, cancel and restart nearer the intended sensor.
+   Capture does not save or automatically choose the first signal.
+
+3. Within 60 seconds, explicitly select the observed code:
+
+   Topic: RFregister
+   Payload: {"request_id":"register-front-door-1","learning_session_id":"learn-front-door-1","id":"front_door_open","code":1906529,"message":"Puerta de casa abierta","repeats":2,"debounce_ms":3000}
+
+   1906529 is the old firmware's code, shown only as an example. Use it only if
+   the new capture confirms it. The registry starts empty; there is no implicit
+   migration of the old hardcoded code without verified timing data.
+
+4. Wait for result "registered", then request `RFlist` and verify the record.
+   Registration ends capture. Reboot and request `RFlist` to check persistence.
+   Test both the door and unrelated remotes before using its events.
+
+There are at most 5 records. IDs contain 1–32 ASCII letters, digits, underscores,
+or hyphens. Codes are JSON decimal integers, 0–16777215 (not hex strings).
+Messages are at most 96 UTF-8 bytes and are included as optional display metadata
+in the structured RF event. Defaults: message=id, repeats=2, debounce_ms=3000.
+Repeats must be 1–5; debounce_ms must be 100–60000.
+
+Registering the same ID after a fresh capture replaces it. A code cannot belong
+to two IDs. Register distinct signals (open/closed/buttons) as distinct IDs; the
+bridge publishes events, not an inferred door state. To delete a record:
+
+    {"request_id":"delete-front-door-1","id":"front_door_open"}
+
+Publish that payload to `RFdelete`. Removing the last record persists an
+empty registry. Writes use a verified temporary JSON file and an atomic LittleFS
+rename. Failed writes leave the previous RAM and committed file configuration
+active. The JSON schema version is 1 and the path is /rf-devices.json.
+
+RF matching and event delivery
+------------------------------
+
+Frames must have a valid start/action/fixed length/trailer. AA/55 in payload bytes
+are preserved; partial frames expire after a 100 ms gap, and malformed streams
+resynchronize without writing outside the parser buffer. Stock A2/A3/A4 messages
+receive an AA A0 55 acknowledgement. ACKs are not acknowledged again. Only A4
+receptions enter event matching. Learning is a software capture window, not the
+RF MCU's A1 learning command, so normal reception continues.
+
+An event requires an exact 24-bit code AND sync/low/high times within 25% of the
+registered reference. Confirmation requires the configured repeat count within
+one second, with no gap above 500 ms. Each record has its own confirmation and
+3000 ms default debounce; unknown codes and unrelated activity cannot suppress it.
+A held transmitter can produce one event per debounce period.
+
+Some RF MCU/sensor combinations report just one UART frame per activation. If
+capture confirms that behavior, re-register with repeats=1. Missing radio signals
+cannot be reconstructed. This stock protocol has no checksum or authenticated
+sender identity: another transmitter with the same code and timing is inherently
+indistinguishable. Timing matching/repeat confirmation reduce false triggers but
+do not add RF authentication.
+
+The RF bridge exports sensor suffix `001_RF` and sensor type `rf_bridge`.
+Registered events are published only to the structured RF event topic:
+
+    BASE<deviceInternalId>_001_RF/aux/rf/event
+
+Events are non-retained, QoS 0, and only published while connected. There is no
+offline event queue or delivery guarantee; counters are diagnostic and reset on
+reboot. Provisioning/reset of IoTCloud settings does not clear the RF registry;
+use `RFdelete` or explicit `RFinitialize` to remove registrations.
+
+Validation
+----------
+
+    sh IotCloud_sonoff_rf/test/run.sh
+
+Run after the PlatformIO build has installed ArduinoJson. Host tests exercise the
+actual parser/filter and bridge implementation, using in-memory serial, MQTT, and
+filesystem adapters. Address/undefined-behavior sanitizers cover binary marker
+bytes, corruption/noise, timeouts, random byte streams, debounce/wraparound,
+registration confirmation, invalid commands, reboot recovery, failed writes and
+renames, deletion, reconnect handling, and corrupt-registry recovery. Hardware UART,
+real flash power-loss behavior, RF reception, MQTT broker ACLs, and OTA deployment
+still need validation on the physical unit.
+
+Protocol and platform references
+-------------------------------
+
+https://esphome.io/components/rf_bridge/
+https://github.com/arendst/Tasmota/blob/development/tasmota/tasmota_xdrv_driver/xdrv_06_snfbridge.ino
+https://arduino-esp8266.readthedocs.io/en/latest/ota_updates/readme.html
