@@ -1,0 +1,13 @@
+Salon Central LD2410 controller
+
+Pin wiring:
+- D2 (GPIO4): relay output
+- D6 (GPIO12): LD2410 presence input
+- D1 (GPIO5): latching wall-switch input
+- GPIO0: reset input
+- GPIO13: built-in LED
+
+The presence and wall-switch inputs use the ESP8266 internal pull-up. Presence
+is only reported to IotCloud; it does not directly control the relay. Connect
+the wall switch between D1 and GND. Either stable edge of the latching switch
+toggles the relay.
