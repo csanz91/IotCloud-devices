@@ -2,3 +2,19 @@ BUILTIN LED 13
 0Kb Flash 512Kb OTA
 Generif esp8285
 Pin tx esta tocado, hay que soldar directamente al esp. Pin de la derecha del todo de la fila de arriba
+
+## Recovery provisioning
+
+The setup server accepts `POST /deviceSetup` with JSON. It does not accept a
+GET request with a body. Connect to the existing device AP (`iot_XXXX`,
+password `12345678`) and use the fixed recovery helper from the repository
+root:
+
+```bash
+python3 tools/provision_device.py
+```
+
+The helper has the target location and Wi-Fi credentials built in. It only
+prompts for the fresh MQTT token from the latest app registration attempt,
+without echoing it, and sends a compact payload compatible with the old
+firmware.
