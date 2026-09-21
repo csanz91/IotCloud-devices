@@ -1,4 +1,5 @@
 #include "ds18b20_sensor.h"
+#include <cmath>
 
 IOTCLOUD_DS18B20::IOTCLOUD_DS18B20(
     const char *sensor_id,
@@ -19,7 +20,7 @@ IOTCLOUD_DS18B20::IOTCLOUD_DS18B20(
 void IOTCLOUD_DS18B20::get_value()
 {
     float value = _ds18b20->get_value();
-    if (value != NULL)
+    if (value > -127.0 && !isnan(value) && !isinf(value))
     {
         set_value(value);
     }
