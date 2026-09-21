@@ -1,0 +1,75 @@
+# Sonoff Dual R2 blinds controller
+
+Arduino firmware for a Sonoff Dual R2 used as a motorized blinds controller.
+
+The firmware opts into the IoTCloud offline recovery watchdog. If full WiFi/MQTT
+connectivity remains unavailable continuously for 15 minutes, the device
+restarts so a wedged ESP8266 radio can recover. Other IoTCloud devices remain
+unaffected unless they explicitly opt in.
+
+## GPIO mapping
+
+Use raw ESP8266 GPIO numbers, not board `D*` aliases:
+
+| Component | GPIO |
+| --- | --- |
+| Relay A / UP | 12 |
+| Relay B / DOWN | 5 |
+| Blue status LED | 13 |
+| Case button | 10 |
+
+## MQTT commands
+
+The sensor listens on:
+
+`{mqtt_header}{sensor_id}/aux/setMovement`
+
+Accepted payloads are signed numeric percentages from `-100` to `100`:
+
+- Positive values open/up.
+- Negative values close/down.
+- `0` stops.
+- Decimals are accepted, for example `12.5`.
+
+Examples:
+
+- `100` opens for the fixed full-open command time.
+- `25` opens for 25% of the full open time.
+- `-12.5` closes for 12.5% of the full close time.
+- `-100` closes for the full close time.
+- `0` stops.
+
+Finite out-of-range values are clamped to `-100` or `100`. Malformed and
+non-finite payloads are ignored. Non-zero commands whose computed duration is
+below 250 ms are ignored.
+
+Any movement command received while the blinds are already moving stops the
+blinds. It does not reverse direction.
+
+The firmware publishes retained movement status on:
+
+`{mqtt_header}{sensor_id}/aux/movement`
+
+Possible movement payloads are `opening`, `closing`, and `stopped`.
+
+## Settings
+
+The full travel time is configurable through:
+
+- `aux/fullOpenTime`
+- `aux/fullCloseTime`
+- `aux/fullOpenCommandTime`
+- `aux/disableStatusLed`
+
+Default timings:
+
+| Setting | Default |
+| --- | ---: |
+| `fullOpenTime` | 16667 |
+| `fullCloseTime` | 18333 |
+| `fullOpenCommandTime` | 23500 |
+
+Timing updates must be complete integer payloads between `1000` and `60000`
+milliseconds. Malformed and out-of-range values are ignored.
+
+`disableStatusLed` defaults to `false`. Publish `true` to keep the blue LED off.
