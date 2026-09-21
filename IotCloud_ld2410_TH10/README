@@ -1,4 +1,12 @@
-BUILTIN LED 13
-0Kb Flash 512Kb OTA
-Generif esp8285
-Pin tx esta tocado, hay que soldar directamente al esp. Pin de la derecha del todo de la fila de arriba
+Built-in LED: GPIO13
+Flash: 1 MB ESP8285, using the no-filesystem linker layout for OTA
+OTA capacity: approximately 512 KB per firmware image
+
+The TX pin is damaged; solder directly to the ESP pin at the far right of the top row.
+
+Input wiring:
+- GPIO2: LD2410 presence signal
+- GPIO14: optocoupler board OUT for the latching wall switch
+- Connect the optocoupler board's low-voltage GND to the TH10 GND. Power the
+  board according to its specification, but ensure OUT remains within the
+  ESP8285's 0-3.3 V range.
