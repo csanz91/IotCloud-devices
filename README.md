@@ -44,6 +44,7 @@ This repository provides production-ready firmware implementations for various I
 IotCloud-devices/
 ├── IotCloud_7seg_clock/         # 7-segment LED clock display
 ├── IotCloud_ds18b20/            # DS18B20 temperature sensor
+├── IotCloud_chain_waxer/        # Hot pot chain waxer with web portal & Silca setpoints
 ├── IotCloud_hexaled/            # Hexagonal LED panel controller
 ├── IotCloud_ld2410/             # LD2410 radar presence sensor
 ├── IotCloud_ld2410_TH10/        # LD2410 for Sonoff TH10
@@ -114,6 +115,26 @@ my_device.add_sensor(new IOTCLOUD_DS18B20("001_T", "Temperature", ONE_WIRE_BUS))
 - OneWire protocol support
 - 12-bit resolution
 - Suitable for pipe/tank monitoring
+
+#### IotCloud_chain_waxer
+Bicycle chain hot-pot waxing station with DS18B20 digital temperature sensor, real-time web portal (`http://chainwaxer.local`), and preset waxing stages.
+
+```cpp
+Device device(IOTCLOUD_FW_VERSION, IOTCLOUD_MODEL_NUM);
+ChainWaxerSensor waxer_sensor("001_T", "HotPot Wax Temp", ONE_WIRE_BUS);
+WaxerWebPortal web_portal(waxer_sensor);
+```
+
+**Features:**
+- Real-time standalone web portal (`http://chainwaxer.local`) with live temperature readout, chart, and audio chime
+- Temperature setpoint presets:
+  - **125°C**: Initial heating & factory grease removal
+  - **85°C**: Regular waxing soak
+  - **72°C**: Chain removal & pull temp (optimal coating thickness)
+- Automatic 10-minute immersion/soak timer with progress bar
+- Non-blocking 1-Wire DS18B20 sampling on D1 (GPIO5), D2, D5, or D6
+- Full IotCloud MQTT integration with offset calibration and captive portal fallback
+
 
 #### IotCloud_si7021_MHZ19
 Combined air quality monitoring station.
@@ -233,8 +254,8 @@ my_device.add_sensor(new Seven_Seg_Clock("001", "Clock"));
 Smart thermostat with DS18B20 temperature sensor and relay control.
 
 ```cpp
-Device my_device = Device("v1.1", "ESP32_DS18B20_THERMOSTAT");
-my_device.add_sensor(new IOTCLOUD_THERMOSTAT_DS18B20("Thermostat", "Thermostat", ONE_WIRE_BUS, RELAY_PIN));
+Device device(IOTCLOUD_FW_VERSION, IOTCLOUD_MODEL_NUM);
+iotcloud_setup(&device, OFFLINE_RESTART_TIMEOUT_MS);
 ```
 
 **Features:**
@@ -242,7 +263,10 @@ my_device.add_sensor(new IOTCLOUD_THERMOSTAT_DS18B20("Thermostat", "Thermostat",
 - Hysteresis-based heating control
 - Setpoint adjustment via MQTT
 - Relay state indication
-- ESP32-based for reliable operation
+- NodeMCU-32S (ESP32) target
+- Model and semantic firmware version configured in `platformio.ini`
+- Model-wide OTA firmware deployment target
+- Automatic restart after 15 minutes without IoTCloud connectivity
 
 ---
 
