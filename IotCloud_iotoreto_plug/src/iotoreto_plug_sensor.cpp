@@ -226,11 +226,9 @@ void IotoretoPlugSensor::persist_state()
     ESP.rtcUserMemoryWrite(RTC_STATE_OFFSET, reinterpret_cast<uint32_t *>(&rtc_state), sizeof(rtc_state));
 }
 
-bool IotoretoPlugSensor::parse_frame()
+bool IotoretoPlugSensor::is_frame_valid(const uint8_t *f)
 {
-    const uint8_t *f = _rx_buf;
-
-    if (f[0] != 0x55 || f[1] != 0x5A) {
+    if (f[1] != FRAME_SYNC) {
         return false;
     }
 
@@ -238,7 +236,38 @@ bool IotoretoPlugSensor::parse_frame()
     for (int i = 2; i < 23; i++) {
         checksum += f[i];
     }
-    if (checksum != f[23]) {
+    return checksum == f[23];
+}
+
+void IotoretoPlugSensor::resync()
+{
+    // The buffer didn't hold a valid frame: keep the bytes from the next
+    // "<header> 0x5A" pair on, so a frame that started mid-buffer isn't lost.
+    for (uint8_t start = 1; start + 1 < FRAME_LEN; start++) {
+        if (_rx_buf[start + 1] == FRAME_SYNC) {
+            _rx_count = FRAME_LEN - start;
+            memmove(_rx_buf, _rx_buf + start, _rx_count);
+            return;
+        }
+    }
+
+    _rx_buf[0] = _rx_buf[FRAME_LEN - 1];
+    _rx_count = 1;
+}
+
+bool IotoretoPlugSensor::parse_frame()
+{
+    const uint8_t *f = _rx_buf;
+    const uint8_t header = f[0];
+
+    // Header 0x55 is a normal frame. 0xFC-0xFF report a chip fault, and 0xAA
+    // means the chip is not calibrated, so its coefficients can't be used.
+    // Other 0xFx headers flag a measurement that is out of range: with no
+    // load the chip sends 0xF2 ("power cycle exceeds range"), meaning 0 W.
+    if ((header & 0xFC) == 0xFC || header == 0xAA) {
+        return false;
+    }
+    if (header != 0x55 && (header & 0xF0) != 0xF0) {
         return false;
     }
 
@@ -252,10 +281,16 @@ bool IotoretoPlugSensor::parse_frame()
     const uint8_t validity = f[20];
     _voltage = ((validity & 0x40) && v_data > 0) ? (float)v_coef / v_data : 0.0f;
     _current = ((validity & 0x20) && i_data > 0) ? (float)i_coef / i_data : 0.0f;
-    _power = ((validity & 0x10) && p_data > 0) ? (float)p_coef / p_data : 0.0f;
+    const bool power_out_of_range = (header & 0xF2) == 0xF2;
+    _power = ((validity & 0x10) && p_data > 0 && !power_out_of_range) ? (float)p_coef / p_data : 0.0f;
+    if (_power == 0.0f) {
+        _current = 0.0f;
+    }
 
+    // Only count energy across a short gap between frames. After a long gap
+    // (lost frames, a stalled loop) the power in between is unknown.
     const unsigned long now_ms = millis();
-    if (_last_frame_ms > 0) {
+    if (_last_frame_ms > 0 && now_ms - _last_frame_ms <= MAX_ENERGY_GAP_MS) {
         _energy_kwh += _power * (float)(now_ms - _last_frame_ms) / 3600000000.0f;
     }
     _last_frame_ms = now_ms;
@@ -271,20 +306,22 @@ void IotoretoPlugSensor::read_meter()
         const uint8_t b = (uint8_t)Serial.read();
         bytes_read++;
 
-        if (_rx_count == 0 && b != 0x55) {
-            continue;
-        }
-
-        if (_rx_count == 1 && b != 0x5A) {
-            _rx_count = (b == 0x55) ? 1 : 0;
+        // Frames are "<header> 0x5A <22 bytes>". The header byte varies, so
+        // sync on the 0x5A that follows it; any byte may start a frame.
+        if (_rx_count == 1 && b != FRAME_SYNC) {
+            _rx_buf[0] = b;
             continue;
         }
 
         _rx_buf[_rx_count++] = b;
 
         if (_rx_count == FRAME_LEN) {
-            parse_frame();
-            _rx_count = 0;
+            if (is_frame_valid(_rx_buf)) {
+                parse_frame();
+                _rx_count = 0;
+            } else {
+                resync();
+            }
         }
     }
 

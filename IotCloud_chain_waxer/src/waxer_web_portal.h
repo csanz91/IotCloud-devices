@@ -14,6 +14,7 @@ public:
 
 private:
     static constexpr uint16_t HTTP_PORT = 80;
+    static constexpr float MAX_OFFSET_C = 20.0f;
 
     ESP8266WebServer _server{HTTP_PORT};
     ChainWaxerSensor &_sensor;

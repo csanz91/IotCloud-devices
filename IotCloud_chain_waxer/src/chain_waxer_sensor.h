@@ -53,8 +53,9 @@ public:
 
     // Soak / Immersion Timer
     uint32_t get_soak_seconds() const { return _soak_seconds; }
-    bool is_timer_running() const { return _timer_running; }
-    void set_timer_running(bool running) { _timer_running = running; }
+    // "Running" means not paused by the user; it only counts in the target zone.
+    bool is_timer_running() const { return !_timer_paused; }
+    void set_timer_running(bool running) { _timer_paused = !running; }
     void reset_soak_timer();
 
     // Process State & User Guidance
@@ -82,7 +83,8 @@ private:
     Step _step = Step::FIND_SENSOR;
     uint32_t _last_step_time = 0;
 
-    float _current_temperature = NAN;
+    float _raw_temperature = NAN;     // as read, without the calibration offset
+    float _current_temperature = NAN; // with the calibration offset
     float _min_temperature = 999.0f;
     float _max_temperature = -999.0f;
 
@@ -92,7 +94,7 @@ private:
     // Timer tracking
     uint32_t _soak_seconds = 0;
     uint32_t _last_timer_tick = 0;
-    bool _timer_running = false;
+    bool _timer_paused = false;
     bool _target_reached_event = false;
 
     void update_soak_timer();

@@ -6,6 +6,8 @@ class IotoretoPlugSensor : public BaseSensor
 {
 private:
     static constexpr uint8_t FRAME_LEN = 24;
+    static constexpr uint8_t FRAME_SYNC = 0x5A;
+    static constexpr unsigned long MAX_ENERGY_GAP_MS = 5000;
     static constexpr unsigned long DEBOUNCE_DELAY_MS = 50;
     static constexpr unsigned long REPORT_PERIOD_MS = 10000;
     static constexpr unsigned long HEALTH_REPORT_PERIOD_MS = 60000;
@@ -35,6 +37,8 @@ private:
 
     bool restore_state();
     void persist_state();
+    static bool is_frame_valid(const uint8_t *frame);
+    void resync();
     bool parse_frame();
     void read_meter();
     void handle_button();

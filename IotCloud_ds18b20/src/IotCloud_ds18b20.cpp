@@ -4,7 +4,7 @@
 
 #define ONE_WIRE_BUS D1
 
-Device my_device = Device("v1.0", "DS18B20");
+Device my_device(IOTCLOUD_FW_VERSION, IOTCLOUD_MODEL_NUM);
 
 void setup(void)
 {

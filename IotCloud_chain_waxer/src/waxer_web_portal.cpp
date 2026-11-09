@@ -519,10 +519,10 @@ void WaxerWebPortal::stop()
 
 bool WaxerWebPortal::is_wifi_ready() const
 {
+    // Only serve while connected to Wi-Fi. The access point exists only in
+    // IotCloud setup mode, whose own setup page already uses port 80.
     const WiFiMode_t mode = WiFi.getMode();
-    const bool sta_connected = (mode == WIFI_STA || mode == WIFI_AP_STA) && (WiFi.status() == WL_CONNECTED);
-    const bool ap_active = (mode == WIFI_AP || mode == WIFI_AP_STA);
-    return sta_connected || ap_active;
+    return (mode == WIFI_STA || mode == WIFI_AP_STA) && (WiFi.status() == WL_CONNECTED);
 }
 
 void WaxerWebPortal::handle_root()
@@ -668,11 +668,14 @@ void WaxerWebPortal::handle_api_offset()
     if (_server.hasArg("val"))
     {
         const float val = _server.arg("val").toFloat();
-        _sensor.set_calibration_offset(val);
-        _server.send(200, "text/plain", "OK");
-        return;
+        if (std::isfinite(val) && fabsf(val) <= MAX_OFFSET_C)
+        {
+            _sensor.set_calibration_offset(val);
+            _server.send(200, "text/plain", "OK");
+            return;
+        }
     }
-    _server.send(400, "text/plain", "Missing val parameter");
+    _server.send(400, "text/plain", "Invalid or missing val parameter");
 }
 
 void WaxerWebPortal::handle_not_found()

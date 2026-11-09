@@ -81,12 +81,14 @@ void ChainWaxerSensor::loop_fast()
                 raw_temp > 135.0f)
             {
                 _sensor_found = false;
+                _raw_temperature = NAN;
                 _current_temperature = NAN;
                 _step = Step::FIND_SENSOR;
                 _last_step_time = now;
             }
             else
             {
+                _raw_temperature = raw_temp;
                 _current_temperature = raw_temp + offset;
 
                 if (_current_temperature < _min_temperature)
@@ -109,9 +111,11 @@ void ChainWaxerSensor::loop_fast()
 
 void ChainWaxerSensor::get_value()
 {
-    if (_sensor_found && !std::isnan(_current_temperature))
+    // AnalogSensor::set_value() adds the calibration offset itself, so pass
+    // the uncorrected reading.
+    if (_sensor_found && !std::isnan(_raw_temperature))
     {
-        set_value(_current_temperature);
+        set_value(_raw_temperature);
     }
 }
 
@@ -120,6 +124,7 @@ void ChainWaxerSensor::set_stage(WaxStage stage)
     if (_stage != stage)
     {
         _stage = stage;
+        _timer_paused = false;
         reset_soak_timer();
     }
 }
@@ -217,13 +222,10 @@ void ChainWaxerSensor::update_soak_timer()
         return;
     }
 
-    if (is_in_target_zone())
+    // The timer counts only while the temperature is in the target zone and
+    // the user hasn't paused it.
+    if (is_in_target_zone() && !_timer_paused)
     {
-        if (!_timer_running)
-        {
-            _timer_running = true;
-        }
-
         if (now - _last_timer_tick >= 1000)
         {
             const uint32_t elapsed_seconds = (now - _last_timer_tick) / 1000;
