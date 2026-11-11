@@ -1,5 +1,7 @@
 #include <Arduino.h>
 #include <iotcloud.h>
+#include <ble_scanner_sensor.h>
+#include <ota_confirm.h>
 #include "keypad_sensor.h"
 
 namespace {
@@ -18,8 +20,11 @@ unsigned long last_change_ms[BUTTON_COUNT] = {0};
 unsigned long pressed_at_ms[BUTTON_COUNT] = {0};
 bool long_press_sent[BUTTON_COUNT] = {false};
 
-Device my_device = Device("v1.0.1", "ESP32_8Button_Keypad");
+Device my_device = Device(IOTCLOUD_FW_VERSION, IOTCLOUD_MODEL_NUM);
 KeypadSensor *keypad_sensor = new KeypadSensor("001_E", "Bedroom Keypad");
+BleScannerSensor ble_scanner("001_BLE", "BLE presence");
+
+constexpr uint32_t OTA_CONFIRM_AFTER_MS = 60000;
 
 void handle_buttons() {
   const unsigned long now = millis();
@@ -63,6 +68,9 @@ void handle_buttons() {
 
 }  // namespace
 
+// Keep a new OTA image pending until the scanner and MQTT have run for a while.
+extern "C" bool verifyRollbackLater() { return true; }
+
 void setup(void) {
   for (uint8_t index = 0; index < BUTTON_COUNT; index++) {
     pinMode(BUTTON_PINS[index], INPUT_PULLDOWN);
@@ -72,6 +80,14 @@ void setup(void) {
   }
 
   my_device.add_sensor(keypad_sensor);
+  my_device.add_sensor(&ble_scanner);
+
+  // Scan only once provisioned; setup/AP mode doesn't need the radio shared.
+  const device_data saved_data = get_data();
+  if (validate_device_data(&saved_data)) {
+    ble_scanner.begin_scanning();
+  }
+
   iotcloud_setup(&my_device);
 
 }
@@ -79,4 +95,5 @@ void setup(void) {
 void loop(void) {
   iotcloud_loop();
   handle_buttons();
+  ota_confirm_when(ble_scanner.healthy_for(OTA_CONFIRM_AFTER_MS));
 }

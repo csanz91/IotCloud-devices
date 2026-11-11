@@ -2,6 +2,8 @@
 #include <unity.h>
 
 #include "ble_beacon.h"
+#include "ble_hci.h"
+#include <vector>
 
 namespace
 {
@@ -180,6 +182,167 @@ void test_millis_wraparound()
     TEST_ASSERT_TRUE(report.gone);
 }
 
+// --- HCI / advertising data -------------------------------------------------
+
+namespace
+{
+struct Seen
+{
+    int calls = 0;
+    uint8_t token[BLE_TOKEN_LEN] = {};
+    int8_t rssi = 0;
+};
+
+void record(void *ctx, const uint8_t token[BLE_TOKEN_LEN], int8_t rssi)
+{
+    Seen *seen = static_cast<Seen *>(ctx);
+    seen->calls++;
+    memcpy(seen->token, token, BLE_TOKEN_LEN);
+    seen->rssi = rssi;
+}
+
+// Flags field, then the beacon as a manufacturer field (length 14, type FF).
+std::vector<uint8_t> beacon_ad()
+{
+    std::vector<uint8_t> ad = {0x02, 0x01, 0x06, 0x0E, 0xFF};
+    ad.insert(ad.end(), VALID_BEACON, VALID_BEACON + sizeof(VALID_BEACON));
+    return ad;
+}
+
+// One LE Advertising Report event per report: {ad, rssi}.
+std::vector<uint8_t> adv_event(const std::vector<std::pair<std::vector<uint8_t>, int8_t>> &reports)
+{
+    std::vector<uint8_t> params = {0x02, static_cast<uint8_t>(reports.size())};
+    for (const auto &r : reports)
+    {
+        params.push_back(0x03); // ADV_NONCONN_IND
+        params.push_back(0x01); // random address
+        for (int i = 0; i < 6; i++)
+            params.push_back(static_cast<uint8_t>(0xA0 + i));
+        params.push_back(static_cast<uint8_t>(r.first.size()));
+        params.insert(params.end(), r.first.begin(), r.first.end());
+        params.push_back(static_cast<uint8_t>(r.second));
+    }
+    std::vector<uint8_t> pkt = {0x04, 0x3E, static_cast<uint8_t>(params.size())};
+    pkt.insert(pkt.end(), params.begin(), params.end());
+    return pkt;
+}
+} // namespace
+
+void test_ad_finds_beacon_after_other_fields()
+{
+    const std::vector<uint8_t> ad = beacon_ad();
+    uint8_t token[BLE_TOKEN_LEN] = {};
+    TEST_ASSERT_TRUE(ble_ad_find_beacon(ad.data(), ad.size(), token));
+    TEST_ASSERT_EQUAL_UINT8_ARRAY(TOKEN_A, token, BLE_TOKEN_LEN);
+}
+
+void test_ad_rejects_truncated_field()
+{
+    std::vector<uint8_t> ad = beacon_ad();
+    ad.pop_back();
+    uint8_t token[BLE_TOKEN_LEN];
+    TEST_ASSERT_FALSE(ble_ad_find_beacon(ad.data(), ad.size(), token));
+}
+
+void test_ad_ignores_other_manufacturer_data()
+{
+    // Apple iBeacon-style manufacturer field: company 0x004C.
+    const uint8_t ad[] = {0x05, 0xFF, 0x4C, 0x00, 0x02, 0x15};
+    uint8_t token[BLE_TOKEN_LEN];
+    TEST_ASSERT_FALSE(ble_ad_find_beacon(ad, sizeof(ad), token));
+}
+
+void test_hci_adv_report_calls_sink()
+{
+    const std::vector<uint8_t> pkt = adv_event({{beacon_ad(), -63}});
+    Seen seen;
+    BleHciEventInfo info;
+    TEST_ASSERT_TRUE(ble_hci_parse_event(pkt.data(), pkt.size(), info, record, &seen));
+    TEST_ASSERT_EQUAL(1, info.adv_reports);
+    TEST_ASSERT_FALSE(info.command_done);
+    TEST_ASSERT_EQUAL(1, seen.calls);
+    TEST_ASSERT_EQUAL_INT8(-63, seen.rssi);
+    TEST_ASSERT_EQUAL_UINT8_ARRAY(TOKEN_A, seen.token, BLE_TOKEN_LEN);
+}
+
+void test_hci_multiple_reports_and_non_beacons()
+{
+    const std::vector<uint8_t> other = {0x02, 0x01, 0x06};
+    const std::vector<uint8_t> pkt = adv_event({{other, -40}, {beacon_ad(), -70}});
+    Seen seen;
+    BleHciEventInfo info;
+    TEST_ASSERT_TRUE(ble_hci_parse_event(pkt.data(), pkt.size(), info, record, &seen));
+    TEST_ASSERT_EQUAL(2, info.adv_reports);
+    TEST_ASSERT_EQUAL(1, seen.calls);
+    TEST_ASSERT_EQUAL_INT8(-70, seen.rssi);
+}
+
+void test_hci_skips_unavailable_rssi()
+{
+    const std::vector<uint8_t> pkt = adv_event({{beacon_ad(), 127}});
+    Seen seen;
+    BleHciEventInfo info;
+    TEST_ASSERT_TRUE(ble_hci_parse_event(pkt.data(), pkt.size(), info, record, &seen));
+    TEST_ASSERT_EQUAL(1, info.adv_reports);
+    TEST_ASSERT_EQUAL(0, seen.calls);
+}
+
+void test_hci_rejects_truncated_report()
+{
+    std::vector<uint8_t> pkt = adv_event({{beacon_ad(), -63}});
+    pkt.pop_back(); // drop RSSI
+    pkt[2] = static_cast<uint8_t>(pkt.size() - 3);
+    Seen seen;
+    BleHciEventInfo info;
+    TEST_ASSERT_FALSE(ble_hci_parse_event(pkt.data(), pkt.size(), info, record, &seen));
+    TEST_ASSERT_EQUAL(0, seen.calls);
+}
+
+void test_hci_command_complete_and_status()
+{
+    // Command Complete for LE Set Scan Enable, status 0.
+    const uint8_t complete[] = {0x04, 0x0E, 0x04, 0x01, 0x0C, 0x20, 0x00};
+    BleHciEventInfo info;
+    TEST_ASSERT_TRUE(ble_hci_parse_event(complete, sizeof(complete), info, nullptr, nullptr));
+    TEST_ASSERT_TRUE(info.command_done);
+    TEST_ASSERT_EQUAL_HEX16(BLE_HCI_OP_LE_SET_SCAN_ENABLE, info.opcode);
+    TEST_ASSERT_EQUAL_HEX8(0x00, info.status);
+
+    // Command Status for Reset, status 0x0C (command disallowed).
+    const uint8_t status[] = {0x04, 0x0F, 0x04, 0x0C, 0x01, 0x03, 0x0C};
+    TEST_ASSERT_TRUE(ble_hci_parse_event(status, sizeof(status), info, nullptr, nullptr));
+    TEST_ASSERT_TRUE(info.command_done);
+    TEST_ASSERT_EQUAL_HEX16(BLE_HCI_OP_RESET, info.opcode);
+    TEST_ASSERT_EQUAL_HEX8(0x0C, info.status);
+}
+
+void test_hci_commands_are_encoded()
+{
+    uint8_t cmd[BLE_HCI_MAX_COMMAND_LEN];
+
+    const uint8_t reset[] = {0x01, 0x03, 0x0C, 0x00};
+    TEST_ASSERT_EQUAL(sizeof(reset), ble_hci_cmd_reset(cmd));
+    TEST_ASSERT_EQUAL_UINT8_ARRAY(reset, cmd, sizeof(reset));
+
+    const uint8_t mask[] = {0x01, 0x01, 0x0C, 0x08, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x1F, 0x00, 0x20};
+    TEST_ASSERT_EQUAL(sizeof(mask), ble_hci_cmd_set_event_mask(cmd));
+    TEST_ASSERT_EQUAL_UINT8_ARRAY(mask, cmd, sizeof(mask));
+
+    // 100 ms = 160 units (0x00A0), 50 ms = 80 units (0x0050), passive.
+    const uint8_t params[] = {0x01, 0x0B, 0x20, 0x07, 0x00, 0xA0, 0x00, 0x50, 0x00, 0x00, 0x00};
+    TEST_ASSERT_EQUAL(sizeof(params), ble_hci_cmd_le_set_scan_params(cmd, 100, 50));
+    TEST_ASSERT_EQUAL_UINT8_ARRAY(params, cmd, sizeof(params));
+
+    // Window longer than interval is clamped to the interval.
+    ble_hci_cmd_le_set_scan_params(cmd, 100, 200);
+    TEST_ASSERT_EQUAL_HEX8(0xA0, cmd[7]);
+
+    const uint8_t enable[] = {0x01, 0x0C, 0x20, 0x02, 0x01, 0x00};
+    TEST_ASSERT_EQUAL(sizeof(enable), ble_hci_cmd_le_set_scan_enable(cmd, true));
+    TEST_ASSERT_EQUAL_UINT8_ARRAY(enable, cmd, sizeof(enable));
+}
+
 int main()
 {
     UNITY_BEGIN();
@@ -195,5 +358,14 @@ int main()
     RUN_TEST(test_rssi_is_clamped);
     RUN_TEST(test_full_table_drops_new_tokens);
     RUN_TEST(test_millis_wraparound);
+    RUN_TEST(test_ad_finds_beacon_after_other_fields);
+    RUN_TEST(test_ad_rejects_truncated_field);
+    RUN_TEST(test_ad_ignores_other_manufacturer_data);
+    RUN_TEST(test_hci_adv_report_calls_sink);
+    RUN_TEST(test_hci_multiple_reports_and_non_beacons);
+    RUN_TEST(test_hci_skips_unavailable_rssi);
+    RUN_TEST(test_hci_rejects_truncated_report);
+    RUN_TEST(test_hci_command_complete_and_status);
+    RUN_TEST(test_hci_commands_are_encoded);
     return UNITY_END();
 }

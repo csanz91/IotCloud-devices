@@ -1,0 +1,8 @@
+{
+  "name": "IotCloudBleScanner",
+  "version": "1.0.0",
+  "description": "BLE presence beacon scanner sensor (ble_scanner) for IotCloud ESP32 devices. Drives the BT controller over VHCI, no BLE host stack.",
+  "build": {
+    "libArchive": false
+  }
+}

@@ -30,9 +30,10 @@ Update **every household phone** to an app build that knows the
 
 ## Flashing
 
-The firmware uses the `min_spiffs.csv` partition table (two 1.9 MB app slots)
-because NimBLE doesn't fit the default 1.25 MB slots. A partition table can't
-change over OTA, so flash over serial the first time; later updates can use OTA.
+The firmware uses the `min_spiffs.csv` partition table (two 1.9 MB app slots).
+v1.0.0 used NimBLE, which didn't fit the default 1.25 MB slots. A partition
+table can't change over OTA, so flash over serial the first time; later
+updates can use OTA.
 
 ```sh
 pio run -e esp32dev -t upload
@@ -43,7 +44,14 @@ Then provision with the usual IotCloud setup flow.
 ## What the scanner does
 
 - Continuous passive scan, duplicate filtering off, no results stored
-  (phones randomize their MAC address).
+  (phones randomize their MAC address). The code is in
+  `shared/libs/IotCloudBleScanner`. It sends HCI commands straight to the BT
+  controller (VHCI), with no BLE host stack, which saves about 27 KB of flash.
+- If no advertising at all is heard for 60 s, it re-runs the HCI init.
+  Every 60 s it logs tracked tokens, dropped samples and minimum free heap.
+- A new OTA image stays pending until the scan has run with MQTT connected
+  for 60 s. If it reboots before that, the bootloader goes back to the
+  previous image.
 - Keeps only manufacturer data that is exactly 13 bytes and starts with
   `FF FF 49 43 01` (company `0xFFFF`, `"IC"`, protocol version 1). The last
   8 bytes are the rolling token.
@@ -75,7 +83,8 @@ in `platformio.ini`:
 
 ## Tests
 
-The beacon filter and the per-token tracker are plain C++ and run on the host:
+The beacon filter, the HCI/advertising parser and the per-token tracker are
+plain C++ and run on the host:
 
 ```sh
 pio test -e native

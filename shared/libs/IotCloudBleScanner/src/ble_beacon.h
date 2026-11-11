@@ -1,7 +1,7 @@
 #pragma once
 
 // Pure C++ (no Arduino) so it can be unit tested on the host.
-// Protocol: see README.md, "BLE presence beacon protocol v1".
+// Protocol: see IotCloud_sonoff_dual_r3_lite_ble/README.md.
 
 #include <cstddef>
 #include <cstdint>
@@ -11,7 +11,7 @@ constexpr size_t BLE_TOKEN_HEX_LEN = BLE_TOKEN_LEN * 2;
 
 // Returns true if `data` is an IotCloud beacon manufacturer data field
 // (company ID FF FF, "IC", version 1, 8-byte token) and copies the token.
-// `data` includes the 2-byte company ID, as NimBLE returns it.
+// `data` is the manufacturer AD value, starting with the 2-byte company ID.
 bool parse_ble_beacon(const uint8_t *data, size_t len, uint8_t token_out[BLE_TOKEN_LEN]);
 
 void ble_token_to_hex(const uint8_t token[BLE_TOKEN_LEN], char out[BLE_TOKEN_HEX_LEN + 1]);

@@ -56,7 +56,7 @@ IotCloud-devices/
 ├── IotCloud_si7021_MHZ19/       # Combined SI7021 + MH-Z19
 ├── IotCloud_si7021_oled/        # SI7021 with OLED display
 ├── IotCloud_sonoff_dual_r3/     # Sonoff Dual R3 (blinds control)
-├── IotCloud_sonoff_dual_r3_madrid/  # Sonoff Dual R3 variant
+├── IotCloud_sonoff_dual_r3_madrid/  # Sonoff Dual R3 variant (2 switches, presence, BLE scanner)
 ├── IotCloud_sonoff_dual_r3_lite_ble/  # Sonoff Dual R3 Lite: BLE presence scanner + 2 switches
 ├── IotCloud_sonoff_mini/        # Sonoff Mini smart switch
 ├── IotCloud_sonoff_plug/        # Sonoff S26 smart plug
@@ -66,6 +66,8 @@ IotCloud-devices/
 ├── IotCloud_washing_machine/    # Washing machine monitor
 ├── IotCloud_rotary/             # Rotary encoder device
 ├── IotCloud-despacho/           # Multi-sensor office device
+├── shared/libs/IotCloudBleScanner/  # BLE presence scanner sensor, shared by devices
+├── shared/no_ota_stubs/        # No-op ArduinoOTA/mDNS, frees flash (opt-in)
 ├── iotcloud_t_subsensor_V2.js   # Espruino subsensor implementation
 └── README.md
 ```
@@ -194,14 +196,20 @@ Also keeps both relays as normal switches.
 ```cpp
 my_device.add_sensor(new GENERIC_TOOGLE("Switch1", "Switch1", RELAY_1, SWITCH_1));
 my_device.add_sensor(new GENERIC_TOOGLE("Switch2", "Switch2", RELAY_2, SWITCH_2));
-my_device.add_sensor(new BleScannerSensor("001_BLE", "BLE presence")); // type ble_scanner
+my_device.add_sensor(&ble_scanner); // BleScannerSensor("001_BLE", ...), type ble_scanner
 ```
 
 **Features:**
-- Passive NimBLE scan for beacon protocol v1 (holds no secrets)
+- Passive scan for beacon protocol v1 (holds no secrets), driving the BT
+  controller over HCI with no BLE host stack
 - Publishes `aux/ble/sighting` every 2 s per token, plus `gone` after 20 s
 - `min_spiffs` partitions: the first flash must be over serial
 - Host unit tests: `pio test -e native`
+
+The scanner lives in `shared/libs/IotCloudBleScanner` and also runs on
+`IotCloud_sonoff_dual_r3_madrid` (default partitions, OTA only) and
+`IotCloud_8button_keypad` (`min_spiffs`). This device runs the same libraries
+as Madrid, so test new scanner firmware here before sending it to Madrid.
 
 #### IotCloud_ld2410
 Radar-based presence detection for automatic light control.
