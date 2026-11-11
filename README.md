@@ -68,6 +68,7 @@ IotCloud-devices/
 ├── IotCloud-despacho/           # Multi-sensor office device
 ├── shared/libs/IotCloudBleScanner/  # BLE presence scanner sensor, shared by devices
 ├── shared/no_ota_stubs/        # No-op ArduinoOTA/mDNS, frees flash (opt-in)
+├── tools/ota_size_check.py     # OTA image size check (used by add_ota_target.py)
 ├── iotcloud_t_subsensor_V2.js   # Espruino subsensor implementation
 └── README.md
 ```
@@ -358,6 +359,29 @@ Multi-sensor office environment monitor.
 4. Configure WiFi and MQTT credentials in the device's configuration
 
 5. Upload to your device
+
+### OTA Releases
+
+Projects that extend `ota_template` get an `upload_remote` target
+(`pio run -t upload_remote`), which uploads the image and deploys it to every
+device of that model. Set `custom_ota_compress = yes` to send a gzip image
+(ESP8266 only).
+
+Every build prints an `OTA size:` line with the real image size against the
+project's flash layout, and `upload_remote` refuses an image that doesn't fit:
+
+- **ESP32:** the `.bin` must fit one app slot of the project's partition table.
+  The "Flash:" line undercounts by about 20 KB (headers and padding).
+- **ESP8266:** the update is staged next to the running image, so both must fit
+  below the filesystem. The check assumes the device runs a build of about the
+  same size; if it runs a smaller one, `custom_ota_size_check = warn` lets the
+  upload through.
+
+The check can't see devices of the same model that were flashed with a
+different layout (for example a keypad still on default partitions while the
+project uses `min_spiffs.csv`). Give those their own `model_num`.
+
+Tests: `python3 -m unittest discover -s tools -p 'test_*.py'`
 
 ### Quick Start Example
 

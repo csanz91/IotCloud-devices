@@ -1,6 +1,7 @@
 import os
 import re
 import gzip
+import importlib.util
 from glob import glob
 
 # --- FIX 1: Make VS Code Happy ---
@@ -81,6 +82,70 @@ def _firmware_for_upload(firmware_path: str) -> str:
         target.write(compressed)
     print(f"Compressed OTA image: {len(compressed)} bytes ({compressed_path})")
     return compressed_path
+
+
+def _load_size_check_module():
+    # SCons runs this file without __file__, so find tools/ from the project.
+    tools_dir = os.path.abspath(os.path.join(env.subst("$PROJECT_DIR"), "..", "tools"))
+    spec = importlib.util.spec_from_file_location(
+        "ota_size_check", os.path.join(tools_dir, "ota_size_check.py")
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _find_esp8266_ldscript():
+    name = env.subst("$LDSCRIPT_PATH")
+    if not name:
+        return None
+    if os.path.isabs(name) and os.path.isfile(name):
+        return name
+    search_dirs = [env.subst(str(d)) for d in env.get("LIBPATH", [])]
+    try:
+        framework_dir = env.PioPlatform().get_package_dir("framework-arduinoespressif8266")
+        search_dirs.append(os.path.join(framework_dir, "tools", "sdk", "ld"))
+    except Exception:
+        pass
+    for directory in search_dirs:
+        path = os.path.join(directory, os.path.basename(name))
+        if os.path.isfile(path):
+            return path
+    return None
+
+
+def _check_ota_size(image_path: str, upload_size: int):
+    """Returns (SizeCheck, None), or (None, reason) when the size can't be checked."""
+    size_check = _load_size_check_module()
+    image_size = os.path.getsize(image_path)
+    platform = env.subst("$PIOPLATFORM")
+    try:
+        if platform == "espressif32":
+            csv_path = env.subst("$PARTITIONS_TABLE_CSV")
+            if not csv_path or not os.path.isfile(csv_path):
+                return None, "partition table not found"
+            return size_check.check_esp32(image_size, _read_text_file(csv_path)), None
+        if platform == "espressif8266":
+            ld_path = _find_esp8266_ldscript()
+            if not ld_path:
+                return None, "linker script not found"
+            return size_check.check_esp8266(image_size, upload_size, _read_text_file(ld_path)), None
+    except ValueError as error:
+        return None, str(error)
+    return None, f"no OTA size rule for platform {platform!r}"
+
+
+def _gzip_size(path: str) -> int:
+    with open(path, "rb") as source:
+        return len(gzip.compress(source.read(), compresslevel=9, mtime=0))
+
+
+def _report_ota_size(target, source, env):
+    # After every build: show the real OTA margin. Never fails the build.
+    image_path = str(target[0])
+    upload_size = _gzip_size(image_path) if _ota_compression_enabled() else os.path.getsize(image_path)
+    result, reason = _check_ota_size(image_path, upload_size)
+    print(result.message() if result else f"OTA size: not checked ({reason})")
 
 
 def _slugify(value: str) -> str:
@@ -179,7 +244,24 @@ def run_remote_upload(*args, **kwargs):
 
     # ESP8266 builds reliably produce firmware.bin (PROGNAME can vary and cause
     # the pre-target dependency check to fail if we use ${PROGNAME}.bin).
-    firmware_path = _firmware_for_upload(str(env.subst("$BUILD_DIR/firmware.bin")))
+    image_path = str(env.subst("$BUILD_DIR/firmware.bin"))
+    firmware_path = _firmware_for_upload(image_path)
+
+    result, reason = _check_ota_size(image_path, os.path.getsize(firmware_path))
+    if result is None:
+        print(f"WARNING: OTA size not checked ({reason}).")
+    else:
+        print(result.message())
+        if not result.fits:
+            # The ESP8266 estimate can be wrong when the device runs a smaller
+            # build; `custom_ota_size_check = warn` lets such an upload through.
+            if (_get_first_project_option("custom_ota_size_check") or "").lower() == "warn":
+                print("WARNING: image may not fit; uploading anyway (custom_ota_size_check = warn).")
+            else:
+                print("ERROR: the device can't accept this image. Not uploading.")
+                print("If the device runs a smaller build, set custom_ota_size_check = warn.")
+                raise SystemExit(2)
+
     uploader_script = os.path.abspath(os.path.join(repo_dir, "tools", "upload_ota.sh"))
 
     model_num, version = _discover_model_and_version(project_dir, src_dir)
@@ -192,6 +274,8 @@ def run_remote_upload(*args, **kwargs):
     cmd = f'bash "{uploader_script}" "{firmware_path}" "{model_num}" "{version}"'
     env.Execute(cmd)
 
+
+env.AddPostAction("$BUILD_DIR/${PROGNAME}.bin", _report_ota_size)
 
 # Register the custom target
 env.AddCustomTarget(
