@@ -52,7 +52,6 @@ void SonoffDualR2Blinds::loop()
         stop_movement();
     }
 
-
     apply_relays();
 }
 

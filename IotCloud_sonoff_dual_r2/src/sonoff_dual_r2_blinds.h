@@ -52,5 +52,4 @@ private:
     void publish_movement();
     void apply_relays();
     void set_status_led(bool moving);
-
 };

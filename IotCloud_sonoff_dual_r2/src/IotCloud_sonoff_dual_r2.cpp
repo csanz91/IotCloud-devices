@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <iotcloud.h>
+
 #include "sonoff_dual_r2_blinds.h"
 
 static constexpr int RELAY_UP_PIN = 12;

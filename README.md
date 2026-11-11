@@ -57,6 +57,7 @@ IotCloud-devices/
 ├── IotCloud_si7021_oled/        # SI7021 with OLED display
 ├── IotCloud_sonoff_dual_r3/     # Sonoff Dual R3 (blinds control)
 ├── IotCloud_sonoff_dual_r3_madrid/  # Sonoff Dual R3 variant
+├── IotCloud_sonoff_dual_r3_lite_ble/  # Sonoff Dual R3 Lite: BLE presence scanner + 2 switches
 ├── IotCloud_sonoff_mini/        # Sonoff Mini smart switch
 ├── IotCloud_sonoff_plug/        # Sonoff S26 smart plug
 ├── IotCloud_sonoff_rf/          # Sonoff RF controller
@@ -184,6 +185,23 @@ my_device.add_sensor(new GENERIC_TOOGLE("SonoffDualR3", "Persiana", RELAY_1, REL
 - Dual switch input support
 - Auto-stop on opposite switch activation
 - MQTT settings for movement duration
+
+#### IotCloud_sonoff_dual_r3_lite_ble
+Sonoff Dual R3 Lite at the house entry: listens for the phones' BLE presence
+beacons and forwards per-token RSSI to the backend, which decides enter/leave.
+Also keeps both relays as normal switches.
+
+```cpp
+my_device.add_sensor(new GENERIC_TOOGLE("Switch1", "Switch1", RELAY_1, SWITCH_1));
+my_device.add_sensor(new GENERIC_TOOGLE("Switch2", "Switch2", RELAY_2, SWITCH_2));
+my_device.add_sensor(new BleScannerSensor("001_BLE", "BLE presence")); // type ble_scanner
+```
+
+**Features:**
+- Passive NimBLE scan for beacon protocol v1 (holds no secrets)
+- Publishes `aux/ble/sighting` every 2 s per token, plus `gone` after 20 s
+- `min_spiffs` partitions: the first flash must be over serial
+- Host unit tests: `pio test -e native`
 
 #### IotCloud_ld2410
 Radar-based presence detection for automatic light control.
