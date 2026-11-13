@@ -3,9 +3,10 @@
 
 namespace
 {
+// Raw JSON: a lone \xB0 byte is not valid UTF-8 and the backend stores it as
+// U+FFFD. The escape \u00b0 is ASCII and decodes to the degree sign.
 constexpr char METADATA_JSON[] =
-    "{\"engUnits\":\"\xB0"
-    "C\",\"stringFormat\":\"#.0\"}";
+    "{\"engUnits\":\"\\u00b0C\",\"stringFormat\":\"#.0\"}";
 }
 
 ChainWaxerSensor::ChainWaxerSensor(
