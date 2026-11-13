@@ -58,6 +58,7 @@ IotCloud-devices/
 ├── IotCloud_sonoff_dual_r3/     # Sonoff Dual R3 (blinds control)
 ├── IotCloud_sonoff_dual_r3_madrid/  # Sonoff Dual R3 variant (2 switches, presence, BLE scanner)
 ├── IotCloud_sonoff_dual_r3_lite_ble/  # Sonoff Dual R3 Lite: BLE presence scanner + 2 switches
+├── IotCloud_sonoff_dual_r3_lite_thermostat/  # Sonoff Dual R3 Lite: DS18B20 thermostat, relay 2 as dry contact
 ├── IotCloud_sonoff_mini/        # Sonoff Mini smart switch
 ├── IotCloud_sonoff_plug/        # Sonoff S26 smart plug
 ├── IotCloud_sonoff_rf/          # Sonoff RF controller
@@ -294,6 +295,11 @@ iotcloud_setup(&device, OFFLINE_RESTART_TIMEOUT_MS);
 - Model and semantic firmware version configured in `platformio.ini`
 - Model-wide OTA firmware deployment target
 - Automatic restart after 15 minutes without IoTCloud connectivity
+
+#### IotCloud_sonoff_dual_r3_lite_thermostat
+Same thermostat on a modified Sonoff Dual R3 Lite: relay 1 removed, relay 2
+(GPIO14) used as a dry contact (OUT1/OUT2) for the heating call, DS18B20 on
+GPIO17. The relay is active-high. See its README for wiring.
 
 ---
 
