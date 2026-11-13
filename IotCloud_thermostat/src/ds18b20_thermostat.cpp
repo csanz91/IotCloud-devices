@@ -7,9 +7,11 @@ namespace
 constexpr uint32_t REPORT_PERIOD_MS = 15000;
 constexpr uint8_t TEMPERATURE_DECIMALS = 1;
 constexpr float FILTER_RATE_CHANGE = 0.01F;
+// The metadata goes out as raw JSON. A lone \xB0 byte is Latin-1, not valid
+// UTF-8, and the degree sign is lost; the JSON escape \u00b0 is ASCII and
+// decodes to the degree sign.
 constexpr char THERMOSTAT_METADATA[] =
-    "{\"engUnits\":\"\xB0"
-    "C\",\"stringFormat\":\"#.0\"}";
+    "{\"engUnits\":\"\\u00b0C\",\"stringFormat\":\"#.0\"}";
 } // namespace
 
 IotCloudThermostatDs18b20::IotCloudThermostatDs18b20(
