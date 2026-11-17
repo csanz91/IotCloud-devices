@@ -56,7 +56,7 @@ for value in "$model_num" "$version"; do
   fi
 done
 
-bin_path="IotCloud/ota/data/$model_num/$version"
+bin_path="IotCloud2/ota/data/$model_num/$version"
 orig_path="$bin_path.orig"
 
 if [ "$action" = "deploy" ]; then

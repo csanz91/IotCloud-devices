@@ -24,7 +24,7 @@ internal_api_url="${OTA_INTERNAL_API_URL:-http://localhost:8001}"
 ota_bin_path="$(realpath "$1")"
 model_num="$2"
 version="$3"
-parent_path="IotCloud/ota/data/$model_num"
+parent_path="IotCloud2/ota/data/$model_num"
 bin_path="$parent_path/$version"
 
 if [[ ! "$model_num" =~ ^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$ ]]; then
