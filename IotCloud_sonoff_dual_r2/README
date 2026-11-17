@@ -46,6 +46,10 @@ below 250 ms are ignored.
 Any movement command received while the blinds are already moving stops the
 blinds. It does not reverse direction.
 
+Reversing always leaves both relays off for at least 500 ms: a command in the
+opposite direction sent right after a stop starts once that time has passed.
+A command received during that wait cancels it.
+
 The firmware publishes retained movement status on:
 
 `{mqtt_header}{sensor_id}/aux/movement`

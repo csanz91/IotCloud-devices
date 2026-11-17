@@ -28,6 +28,8 @@ private:
     };
 
     static constexpr unsigned long MIN_MOVEMENT_DURATION_MS = 250;
+    // Both relays stay off at least this long before the motor reverses.
+    static constexpr unsigned long REVERSAL_DEAD_TIME_MS = 500;
 
     const int _relay_up_pin;
     const int _relay_down_pin;
@@ -41,6 +43,13 @@ private:
     unsigned long _movement_duration = 0;
     bool _status_led_enabled = true;
 
+    // Reversal interlock: direction and time of the last stop, and a movement
+    // waiting for the dead time to pass.
+    Direction _last_direction = STOPPED;
+    unsigned long _stopped_at = 0;
+    Direction _pending_direction = STOPPED;
+    unsigned long _pending_duration = 0;
+
     void subscribe_command(EspMQTTClient *mqtt_client, const char *endpoint);
     void subscribe_timing(EspMQTTClient *mqtt_client, const char *endpoint, unsigned long *target);
     void subscribe_status_led_setting(EspMQTTClient *mqtt_client);
@@ -48,6 +57,7 @@ private:
     bool parse_movement(const String &payload, float *movement);
     unsigned long movement_duration(Direction direction, float percent) const;
     void start_movement(Direction direction, unsigned long duration);
+    void energize(Direction direction, unsigned long duration);
     void stop_movement();
     void publish_movement();
     void apply_relays();

@@ -68,6 +68,10 @@ The firmware does not subscribe to `aux/setToggle` or the old typo endpoint
 - The firmware does not reverse direction from a movement command while already
   moving. The user must send another command after the stop if they want to move
   in the opposite direction.
+- After a stop, a movement in the opposite direction waits until both relays
+  have been off for 500 ms (motor protection), then runs for its full
+  duration. `aux/movement` reports `stopped` during the wait, and any command
+  received during it cancels the queued movement.
 - Movement auto-stops after the configured duration for that direction and
   percentage.
 - The app should not assume a successful command means the blind reached an

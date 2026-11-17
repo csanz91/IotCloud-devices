@@ -52,6 +52,20 @@ void SonoffDualR2Blinds::loop()
         stop_movement();
     }
 
+    if (_direction == STOPPED && _last_direction != STOPPED &&
+        millis() - _stopped_at >= REVERSAL_DEAD_TIME_MS)
+    {
+        // Dead time over. Clearing _last_direction also keeps a stale stop
+        // time from looking recent again after millis() rolls over.
+        _last_direction = STOPPED;
+        if (_pending_direction != STOPPED)
+        {
+            Direction direction = _pending_direction;
+            _pending_direction = STOPPED;
+            energize(direction, _pending_duration);
+        }
+    }
+
     apply_relays();
 }
 
@@ -134,7 +148,7 @@ void SonoffDualR2Blinds::handle_command(const String &payload)
         return;
     }
 
-    if (_direction != STOPPED)
+    if (_direction != STOPPED || _pending_direction != STOPPED)
     {
         stop_movement();
         return;
@@ -204,6 +218,20 @@ void SonoffDualR2Blinds::start_movement(Direction direction, unsigned long durat
 {
     stop_movement();
 
+    if (_last_direction != STOPPED && _last_direction != direction &&
+        millis() - _stopped_at < REVERSAL_DEAD_TIME_MS)
+    {
+        // Reversing too soon: loop() starts it once the dead time has passed.
+        _pending_direction = direction;
+        _pending_duration = duration;
+        return;
+    }
+
+    energize(direction, duration);
+}
+
+void SonoffDualR2Blinds::energize(Direction direction, unsigned long duration)
+{
     _direction = direction;
     _movement_duration = duration;
     _movement_started_at = millis();
@@ -214,6 +242,12 @@ void SonoffDualR2Blinds::start_movement(Direction direction, unsigned long durat
 void SonoffDualR2Blinds::stop_movement()
 {
     bool was_moving = _direction != STOPPED;
+    _pending_direction = STOPPED;
+    if (was_moving)
+    {
+        _last_direction = _direction;
+        _stopped_at = millis();
+    }
     _direction = STOPPED;
     _movement_duration = 0;
     digitalWrite(_relay_up_pin, LOW);
