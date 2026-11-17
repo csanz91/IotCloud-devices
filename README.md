@@ -179,16 +179,15 @@ my_device.add_sensor(new GENERIC_TOOGLE("SonoffMini", "Switch", RELAY_PIN, SWITC
 Dual-relay controller for motorized blinds/shades.
 
 ```cpp
-Device my_device = Device("v1.0.4", "SONOFF_DUAL_R3");
-my_device.add_sensor(new GENERIC_TOOGLE("SonoffDualR3", "Persiana", RELAY_1, RELAY_2, SWITCH_1, SWITCH_2));
+my_device.add_sensor(new SonoffDualR3Blinds("SonoffDualR3", "Persiana", RELAY_1, RELAY_2, SWITCH_1, SWITCH_2));
 ```
 
 **Features:**
-- Bidirectional motor control (UP/DOWN)
-- Configurable action duration (1-30 seconds)
-- Dual switch input support
-- Auto-stop on opposite switch activation
-- MQTT settings for movement duration
+- ESP32 Dual R3, OTA only (default partitions), model `SONOFF_DUAL_R3`
+- Same MQTT API as the Dual R2 blinds (`aux/setMovement` partial moves, `aux/movement` status)
+- Wall switches move the blind while held (60 s cap), with noise-hardened debounce
+- Reversal dead time, and a lockout that breaks input-noise feedback loops
+- Host unit tests: `pio test -e native`
 
 #### IotCloud_sonoff_dual_r3_lite_ble
 Sonoff Dual R3 Lite at the house entry: listens for the phones' BLE presence
