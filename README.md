@@ -63,6 +63,7 @@ IotCloud-devices/
 ├── IotCloud_sonoff_plug/        # Sonoff S26 smart plug
 ├── IotCloud_sonoff_rf/          # Sonoff RF controller
 ├── IotCloud_thermostat/         # DS18B20-based thermostat
+├── IotCloud_madrid_thermostat/  # Madrid thermostat relay (separate temperature sensor)
 ├── IotCloud_thermostat_subsensor/  # Thermostat subsensor
 ├── IotCloud_washing_machine/    # Washing machine monitor
 ├── IotCloud_rotary/             # Rotary encoder device
@@ -294,6 +295,14 @@ iotcloud_setup(&device, OFFLINE_RESTART_TIMEOUT_MS);
 - Model and semantic firmware version configured in `platformio.ini`
 - Model-wide OTA firmware deployment target
 - Automatic restart after 15 minutes without IoTCloud connectivity
+
+#### IotCloud_madrid_thermostat
+
+PlatformIO project for the Madrid heating relay on NodeMCU ESP8266. It retains
+the `SUBSENSOR_THERMOSTAT` model, the `Thermostat` MQTT sensor ID suffix, and the
+active-high relay on D2 (GPIO4). The separate sensor publishes temperature and
+humidity to the thermostat's MQTT topics. The relay device restarts after 15
+minutes without IoTCloud connectivity.
 
 #### IotCloud_sonoff_dual_r3_lite_thermostat
 Same thermostat on a modified Sonoff Dual R3 Lite: relay 1 removed, relay 2
