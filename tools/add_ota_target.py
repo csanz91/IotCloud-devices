@@ -272,6 +272,18 @@ def run_remote_upload(*args, **kwargs):
         raise SystemExit(2)
 
     cmd = f'bash "{uploader_script}" "{firmware_path}" "{model_num}" "{version}"'
+
+    # OTA_TARGET=canary|early|<id>[,<id>...] makes it a staged rollout
+    # (see tools/deploy_ota.sh). Checked here because it goes into a shell command.
+    target = os.environ.get("OTA_TARGET", "").strip()
+    if target:
+        if not re.fullmatch(r"canary|early|[A-Za-z0-9_-]{1,50}(,[A-Za-z0-9_-]{1,50})*", target):
+            print("ERROR: OTA_TARGET must be 'canary', 'early' or comma-separated device IDs.")
+            raise SystemExit(2)
+        cmd += f' "{target}"'
+    else:
+        print("Deploying to every device of the model (set OTA_TARGET for a staged rollout).")
+
     env.Execute(cmd)
 
 
@@ -283,5 +295,5 @@ env.AddCustomTarget(
     "$BUILD_DIR/firmware.bin",
     run_remote_upload,
     title="Upload Remote",
-    description="Upload firmware and deploy its model-wide OTA release",
+    description="Upload firmware and deploy it (OTA_TARGET=canary|early|<ids> for a staged rollout)",
 )
