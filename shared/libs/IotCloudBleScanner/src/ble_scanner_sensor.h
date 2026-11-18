@@ -37,7 +37,8 @@ public:
     void loop() override;
 
     // True once the scan is running and MQTT has stayed connected for
-    // `min_ms`. Used to confirm a new OTA image before rollback is cancelled.
+    // `min_ms`. Pass it to OTA::set_health_check so a new OTA image is only
+    // confirmed (and rollback cancelled) once the scanner works.
     bool healthy_for(uint32_t min_ms) const;
 
     // Called from the controller task. Must stay short.
