@@ -7,7 +7,7 @@
 class Seven_Seg_Clock : public LedSensor
 {
 
-    static constexpr int _data_pin = 1;
+    static constexpr int _data_pin = D1; // raw GPIO5; FastLED uses raw GPIO numbering
     static constexpr int _num_leds = 60;
 
 private:
