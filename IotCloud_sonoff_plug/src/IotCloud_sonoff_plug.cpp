@@ -11,7 +11,7 @@
 // no dtr, aka ck
 // 1MB FS none
 
-Device my_device = Device("v1.0.6", "SONOFF_PLUG");
+Device my_device(IOTCLOUD_FW_VERSION, IOTCLOUD_MODEL_NUM);
 
 void setup(void)
 {
