@@ -9,7 +9,7 @@ class RgbLamp : public LedSensor
 {
 
     static constexpr int NUM_MAX_LEDS = 255;
-    static constexpr int DATA_PIN = 1;
+    static constexpr int DATA_PIN = D1; // raw GPIO5; FastLED uses raw GPIO numbering
 
 private:
     const int _num_leds;

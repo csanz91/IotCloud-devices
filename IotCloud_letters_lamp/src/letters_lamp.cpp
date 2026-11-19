@@ -3,7 +3,7 @@
 
 #include "rgb_lamp.h"
 
-Device my_device = Device("v1.7", "RGB_RAINBOW");
+Device my_device(IOTCLOUD_FW_VERSION, IOTCLOUD_MODEL_NUM);
 
 #define NUM_LEDS 110
 
