@@ -2,7 +2,6 @@
 #define _HEXA_LED
 
 #include <sensors/led.h>
-#define FASTLED_ESP8266_NODEMCU_PIN_ORDER
 #include <FastLED.h>
 #include "FastLED_RGBW.h"
 

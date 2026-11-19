@@ -5,9 +5,9 @@ HexaLed::HexaLed(
     const char *sensor_name) : LedSensor(sensor_id,
                                          sensor_name)
 {
-    // FastLED converts NODEMCU pins into the corresponding GPIO pin
-    // 5 is the D5 pin
-    FastLED.addLeds<WS2812, 5, RGB>(_leds, _leds.rgb_size());
+    // Raw GPIO numbering: D5 expands to GPIO14. Do not use FastLED's NodeMCU
+    // pin order: FastLED 3.10.9 then bit-bangs the wrong GPIO.
+    FastLED.addLeds<WS2812, D5, RGB>(_leds, _leds.rgb_size());
 }
 
 void HexaLed::set_brightness(float brightness)
