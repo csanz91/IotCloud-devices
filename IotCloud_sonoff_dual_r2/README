@@ -1,5 +1,21 @@
 # Sonoff Dual R2 blinds controller
 
+## Device inventory
+
+Two relays drive a motorized blind with local wall-switch control.
+
+- **Firmware model** `SONOFF_DUAL_R2`
+- **Hardware** ESP8285. SONOFF Dual R2 with a 1 MB ESP8285 build target.
+- **Arduino build** [`esp8285_1m`](platformio.ini), configured version [`v1.0.7`](platformio.ini)
+
+**Registry and broker snapshot** 19 November 2026, 07:10 CET.
+
+| Location | DB room | DB display name | Registered sensors | Reported firmware | Arduino lib | OTA target | MQTT |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Teruel | Comedor | `dc4f2297-577e` | Persiana (toggle/blinds) | `v1.0.7` via MQTT | `1.3.0` | `v1.0.7` | Connected |
+
+[Device inventory index](../README.md#device-inventory)
+
 Arduino firmware for a Sonoff Dual R2 used as a motorized blinds controller.
 
 The firmware opts into the IoTCloud offline recovery watchdog. If full WiFi/MQTT

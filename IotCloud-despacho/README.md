@@ -18,10 +18,10 @@ Despacho has only ~25 KB of free heap with all its sensors running, so it is the
 - **Data pin** NodeMCU **D5 (GPIO14)**, written as `addLeds<WS2812, D5, RGB>` in [`hexa_led.cpp`](src/hexa_led.cpp). `D5` expands to raw GPIO14, which matches FastLED's default raw numbering. The old Arduino IDE binary also used pin 14.
 - **Don't use** `FASTLED_ESP8266_NODEMCU_PIN_ORDER` with a bare `5`. Up to v1.0.5, `hexa_led.h` defined it. With FastLED 3.10.9, setup switches GPIO14 to an output, but the bit-bang loop builds its mask from the bare number (`1u << 5`). So the data went to GPIO5, which is D1, the SI7021 pin, and the panel stayed dark. Fixed in v1.0.6.
 
-**Registry and broker snapshot** 19 November 2026, 07:10 CET.
+**Registry and broker snapshot** 19 November 2026, 09:01 CET.
 
 | Location | DB room | DB display name | Registered sensors | Reported firmware | Arduino lib | OTA target | MQTT |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Madrid | Despacho | `2cf43279-f068` | CO2 (analog/co2), Hexaled (led), Hum. (analog/humidity), Pres. Desp (presence/presence), Temp. (analog/temperature) | `v1.0.5` via MQTT | `1.3.0` | `v1.0.5` | Connected |
+| Madrid | Despacho | `2cf43279-f068` | CO2 (analog/co2), Hexaled (led), Hum. (analog/humidity), Pres. Desp (presence/presence), Temp. (analog/temperature) | `v1.0.19` in DB | `1.3.0` | `v1.0.19` | Connected |
 
 [Device inventory index](../README.md#device-inventory)

@@ -1,6 +1,22 @@
 SONOFF RF Bridge R2 — IoTCloud v2
 ================================
 
+## Device inventory
+
+433 MHz bridge for registered RF codes. The registry exposes RF control and a notifier.
+
+- **Firmware model** `SONOFF_RF`
+- **Hardware** ESP8285. SONOFF RF Bridge R2 with a 1 MB ESP8285 and stock iTead RF MCU.
+- **Arduino build** [`esp8285_1m`](platformio.ini), configured version [`v2.0.3`](platformio.ini)
+
+**Registry and broker snapshot** 19 November 2026, 07:10 CET.
+
+| Location | DB room | DB display name | Registered sensors | Reported firmware | Arduino lib | OTA target | MQTT |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Madrid | Salon | `4cebd6f7-28d8` | RF bridge (notifier), RF bridge (rf_bridge) | `v2.0.3` via MQTT | `1.3.0` | `v2.0.3` | Connected |
+
+[Device inventory index](../README.md#device-inventory)
+
 This project receives stock iTead RF UART messages and publishes events only for
 registered RF codes. It targets the ESP8285 with 1 MB flash, the stock RF MCU,
 UART0 RX/TX on GPIO3/GPIO1 at 19200 8N1, button GPIO0, and status LED GPIO13.

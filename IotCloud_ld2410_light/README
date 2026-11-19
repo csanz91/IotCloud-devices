@@ -8,11 +8,11 @@ Reports LD2410 presence and BH1750 illuminance.
 - **Hardware** ESP8266. Custom NodeMCU build. Board vendor unknown.
 - **Arduino build** [`nodemcuv2`](platformio.ini), configured version [`v1.2.0`](platformio.ini)
 
-**Registry and broker snapshot** 19 November 2026, 07:10 CET.
+**Registry and broker snapshot** 19 November 2026, 09:01 CET.
 
 | Location | DB room | DB display name | Registered sensors | Reported firmware | Arduino lib | OTA target | MQTT |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Madrid | Salon | `bcddc224-879f` | Light (analog/illuminance), Notifier (notifier), Presencia (presence/presence) | `v1.0.4` via MQTT | `1.3.0` | `v1.0.4` | Connected |
+| Madrid | Salon | `bcddc224-879f` | Light (analog/illuminance), Presencia (presence/presence) | `v1.2.0` in DB | `1.3.0` | `v1.2.0` | Connected |
 
 This is the Salon presence and light-level unit. The separate Salon light relay runs [legacy Espruino firmware](../docs/legacy-devices/README.md#madrid-salon-light-relay).
 

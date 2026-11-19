@@ -1,5 +1,21 @@
 # UniFi Motion Light
 
+## Device inventory
+
+Light controller triggered by authenticated UniFi Protect webhooks and a local wall switch.
+
+- **Firmware model** `NODEMCU_UNIFI_MOTION_LIGHT`
+- **Hardware** ESP8266. Custom NodeMCU build with an external relay and isolated wall-switch input. Board vendor unknown.
+- **Arduino build** [`nodemcuv2`](platformio.ini), configured version [`v1.0.0`](src/IotCloud_unifi_motion_light.cpp)
+
+**Registry and broker snapshot** 19 November 2026, 09:01 CET.
+
+No matching database record or MQTT model announcement was found. No images found on the OTA server.
+
+Teruel’s `Garden door camera` database entry is an Automation Runner integration with its own model `camera_door`.
+
+[Device inventory index](../README.md#device-inventory)
+
 NodeMCU ESP8266 firmware that accepts an authenticated UniFi Protect motion
 webhook and controls a light through an external mains-rated relay. It also
 keeps an existing wall switch through a mains-rated optocoupler whose output is
@@ -105,4 +121,3 @@ Run the host-side state-machine tests with:
 ```sh
 pio test -e native
 ```
-

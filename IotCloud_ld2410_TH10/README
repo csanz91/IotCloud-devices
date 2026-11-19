@@ -1,10 +1,23 @@
-Built-in LED: GPIO13
-Flash: 1 MB ESP8285, using the no-filesystem linker layout for OTA
-OTA capacity: approximately 512 KB per firmware image
+# Cocina LD2410 light controller
 
-The TX pin is damaged; solder directly to the ESP pin at the far right of the top row.
+## Device inventory
 
-Input wiring:
+Kitchen light controller with an LD2410 presence input and a wall-switch input.
+
+- **Firmware model** `ESP8266_LD2410_TH10`
+- **Hardware** ESP8285. Modified SONOFF TH10 with a 1 MB ESP8285 build target.
+- **Arduino build** [`esp8285_1m`](platformio.ini), configured version [`v1.2.2`](platformio.ini)
+
+**Registry and broker snapshot** 19 November 2026, 07:10 CET.
+
+| Location | DB room | DB display name | Registered sensors | Reported firmware | Arduino lib | OTA target | MQTT |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Madrid | Cocina | `807d3a32-e1a5` | Cocina (light/light_switch), Pres. Cocina (presence/presence) | `v1.2.2` via MQTT | `1.3.0` | `v1.2.2` | Connected |
+
+[Device inventory index](../README.md#device-inventory)
+
+## Input wiring
+
 - GPIO2: LD2410 presence signal
 - GPIO14: optocoupler board OUT for the latching wall switch
 - Connect the optocoupler board's low-voltage GND to the TH10 GND. Power the

@@ -1,5 +1,19 @@
 # IotCloud_sonoff_dual_r3_lite_thermostat
 
+## Device inventory
+
+DS18B20 thermostat with relay 2 used as a dry contact for the heating call.
+
+- **Firmware model** `SONOFF_DUAL_R3_LITE_THERMOSTAT`
+- **Hardware** ESP32. Modified SONOFF Dual R3 Lite.
+- **Arduino build** [`esp32dev`](platformio.ini), configured version [`v1.2.1`](platformio.ini)
+
+**Registry and broker snapshot** 19 November 2026, 09:01 CET.
+
+No matching database record or MQTT model announcement was found. The OTA server has seven images. The latest image and the registered release are both `v1.2.1`.
+
+[Device inventory index](../README.md#device-inventory)
+
 Thermostat on a modified Sonoff Dual R3 Lite (ESP32), with a DS18B20 probe.
 
 ## Hardware mods

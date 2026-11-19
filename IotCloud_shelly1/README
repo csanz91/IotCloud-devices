@@ -1,5 +1,21 @@
 # Shelly 1
 
+## Device inventory
+
+Single light relay with an external wall-switch input.
+
+- **Firmware model** `SHELLY1`
+- **Hardware** ESP8285. Shelly 1. This Arduino target uses the ESP8285 2 MB profile.
+- **Arduino build** [`esp8285_2m`](platformio.ini), configured version [`v1.0.0`](platformio.ini)
+
+**Registry and broker snapshot** 19 November 2026, 09:01 CET.
+
+No matching database record or MQTT model announcement was found. No images found on the OTA server.
+
+Madrid’s [Salon relay](../docs/legacy-devices/README.md#madrid-salon-light-relay) is a probable hardware match. Its current device record has a blank model and matches the separate Espruino script.
+
+[Device inventory index](../README.md#device-inventory)
+
 Single-relay Shelly 1 firmware for the IotCloud platform.
 
 Pin mapping:

@@ -1,4 +1,19 @@
-BUILTIN LED 13
-0Kb Flash 512Kb OTA
-Generif esp8285
-Pin tx esta tocado, hay que soldar directamente al esp. Pin de la derecha del todo de la fila de arriba
+# Baño LD2410 light controller
+
+## Device inventory
+
+LD2410 presence sensor with a light relay and manual wall switch.
+
+- **Firmware model** `ESP8266_LD2410`
+- **Hardware** ESP8266 family. The PlatformIO target is NodeMCU v2. The installed board revision is unverified.
+- **Arduino build** [`nodemcuv2`](platformio.ini), configured version [`v1.2.2`](platformio.ini)
+
+**Registry and broker snapshot** 19 November 2026, 07:10 CET.
+
+| Location | DB room | DB display name | Registered sensors | Reported firmware | Arduino lib | OTA target | MQTT |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Madrid | Baño | `2cf43214-6d41` | Baño (light/light_switch), Presencia Baño (presence/presence) | `v1.2.2` via MQTT | `1.3.0` | `v1.2.2` | Connected |
+
+Firmware pins are D2 for relay, D1 for presence and D5 for manual input.
+
+[Device inventory index](../README.md#device-inventory)

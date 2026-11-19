@@ -1,5 +1,26 @@
 # Sonoff Dual R3 blinds controller
 
+## Device inventory
+
+Four off-site motorized blind controllers with hold-to-move wall switches.
+
+- **Firmware model** `SONOFF_DUAL_R3`
+- **Hardware** ESP32. SONOFF Dual R3.
+- **Arduino build** [`esp32dev`](platformio.ini), configured version [`v1.1.0`](platformio.ini)
+
+**Registry and broker snapshot** 19 November 2026, 07:10 CET.
+
+| Location | DB room | DB display name | Registered sensors | Reported firmware | Arduino lib | OTA target | MQTT |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Zaragoza | Comedor (sensor label) | `b8d61a62-ef50` | Comedor (toggle/blinds) | `v1.1.0` via MQTT | `1.3.0` | `v1.1.0` | Connected |
+| Zaragoza | Hab. Principal (sensor label) | `b8d61a62-efa8` | Hab. Principal (toggle/blinds) | `v1.1.0` via MQTT | `1.3.0` | `v1.1.0` | Connected |
+| Zaragoza | Habitación 2 (sensor label) | `b8d61a66-4d90` | Habitación 2 (toggle/blinds) | `v1.1.0` via MQTT | `1.3.0` | `v1.1.0` | Connected |
+| Zaragoza | Habitación peq (sensor label) | `b8d61a66-687c` | Habitación peq (toggle/blinds) | `v1.1.0` via MQTT | `1.3.0` | `v1.1.0` | Connected |
+
+Room labels in the table come from the DB sensor names. The registry has no separate room assignments for these four devices. At the 18 November rollout check, Habitación 2 had 43 offline episodes of at least five seconds in the preceding seven days. Forty-one started before the v1.1.0 update. All four maintained uptime through the two shared overnight disconnects after the update.
+
+[Device inventory index](../README.md#device-inventory)
+
 Firmware for a Sonoff Dual R3 (ESP32) driving a blind motor, with two wall
 switches. Four units are installed off-site and are updated by OTA only.
 

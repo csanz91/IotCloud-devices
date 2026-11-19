@@ -1,6 +1,22 @@
 # Sonoff Dual R3 Lite — BLE presence scanner
 
-ESP32 firmware for a Sonoff Dual R3 Lite installed at the house entry. It
+## Device inventory
+
+Two light relays and a passive BLE presence scanner for an entryway.
+
+- **Firmware model** `SONOFF_DUAL_R3_LITE_BLE`
+- **Hardware** ESP32. SONOFF Dual R3 Lite.
+- **Arduino build** [`esp32dev`](platformio.ini), configured version [`v1.1.0`](platformio.ini)
+
+**Registry and broker snapshot** 19 November 2026, 09:01 CET.
+
+No matching database record or MQTT model announcement was found. The OTA server has `v1.1.0`. The release table lists `v1.2.0`, for which no image was found in the model directory.
+
+The existing installation notes refer to an entryway unit. Its current database name and location could not be verified.
+
+[Device inventory index](../README.md#device-inventory)
+
+ESP32 firmware for a Sonoff Dual R3 Lite entryway scanner. It
 listens for the BLE presence beacons that household phones advertise and
 forwards what it hears over MQTT. It holds no secrets and makes no presence
 decisions: the API resolves each token to a user and decides enter/leave.
